@@ -1,0 +1,8 @@
+\beamer@endinputifotherversion {3.36pt}
+\select@language {british}
+\beamer@sectionintoc {1}{Radial Basis Function}{3}{0}{1}
+\beamer@subsectionintoc {1}{1}{Radial Basis Function Interpolation}{4}{0}{1}
+\beamer@sectionintoc {2}{Warps}{7}{0}{2}
+\beamer@sectionintoc {3}{Cylinder anamorphosis}{15}{0}{3}
+\beamer@sectionintoc {4}{Transformation of coordinates}{18}{0}{4}
+\beamer@sectionintoc {5}{Perspective Mapping Between Quadrilaterals}{21}{0}{5}
