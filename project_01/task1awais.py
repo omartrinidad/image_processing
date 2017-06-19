@@ -3,6 +3,8 @@
 # histogram transformations
 ################################################################################
 
+from __future__ import print_function
+from __future__ import division
 import scipy.misc as misc
 import numpy as np
 
@@ -38,12 +40,13 @@ def LloydAlgorithm(imgData, levels=2):
         nextBoundary = boundaries[i+1]
         for j in xrange(int(currentBoundary),int(nextBoundary)):
             error += (j-pointsBv[i])*(j-pointsBv[i])*probs[j]
-
+    error1 = error
     iterationCount = 0
-    while(iterationCount<totalIterations and error>threshold):
+    stopFlag = False
+    while(iterationCount<totalIterations and stopFlag == False):
         iterationCount+=1
         #update boundaries
-        for i in range(levels):
+        for i in range(1, levels):
             boundaries[i] = (pointsBv[i]+pointsBv[i-1])/2.0
 
         #update points
@@ -63,6 +66,17 @@ def LloydAlgorithm(imgData, levels=2):
             else:
                 pointsBv[i] = float(numerator)/float(denominator)
 
+        # compute error
+        error = error1
+        error1 = 0.0
+        for i in xrange(levels):
+            currentBoundary = boundaries[i]
+            nextBoundary = boundaries[i+1]
+            for j in xrange(int(currentBoundary),int(nextBoundary)):
+                error1 += (j-pointsBv[i])*(j-pointsBv[i])*probs[j]
+        if (error1 - error > threshold):
+            stopFlag = True
+
 
     rows, cols = imgData.shape
     newImgData = np.ndarray(shape=(rows, cols))
@@ -72,12 +86,26 @@ def LloydAlgorithm(imgData, levels=2):
                 if(imgData[i,j]>=boundaries[k] and imgData[i,j]<boundaries[k+1]):
                     break
             newImgData[i,j] = pointsBv[k]
-
+    print(boundaries)
+    print(pointsBv)
     return newImgData
 
 
 
 image = readImage('images/bauckhage-gamma-2.png')
-result = LloydAlgorithm(image, levels=4)
-misc.imshow(result)
+result = LloydAlgorithm(image, levels=8)
+
+import matplotlib.pyplot as plt
+# plt.imshow(image,cmap='gray')
+plt.imshow(result,cmap='gray')
+plt.show()
+
+# plt.hist(image.ravel(), bins=256, range=[0, 256], cumulative=1, facecolor='blue', alpha=0.5)
+# plt.hist(result.ravel(), bins=256, range=[0, 256], cumulative=1, facecolor='blue', alpha=0.5)
+# plt.show()
+
+# histogram = np.histogram(result, bins=np.arange(257))[0]
+
+
+# misc.imshow(result)
 writeImage(result,'result.png')
