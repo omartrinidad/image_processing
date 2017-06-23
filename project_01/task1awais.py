@@ -50,7 +50,7 @@ def LloydAlgorithm(imgData, levels=2):
             boundaries[i] = (pointsBv[i]+pointsBv[i-1])/2.0
 
         #update points
-        for i in range(levels):
+        for i in range(levels-1):
             numerator = 0.0
             denominator = 0.0
             currentBoundary = boundaries[i]
