@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# some paths
+project_01/resulting_images
+
 # Distribution / packaging
 .Python
 env/

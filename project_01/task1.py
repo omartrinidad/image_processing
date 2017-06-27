@@ -1,33 +1,125 @@
 ################################################################################
 # Task 1.1
-# Lloyd Max algorithm for gray value quantization
+# histogram transformations
 ################################################################################
 
-import numpy as np
+
+from __future__ import print_function
+from __future__ import division
+from itertools import islice
 import scipy.misc as misc
-from scipy import ndimage
-from auxiliar import load_images, show_histo
-
-# load a list with the next images: clock, cat, portrait, face, asterixGrey,
-# bauckhage, bauckhage-gamma-1, and bauckhage-gamma-2
-images = load_images()
+import numpy as np
 
 
-def lloyd_max(image, levels=8, stop_condition='max_iterations', max_iterations=200):
+def readImage(filename):
+    f = misc.imread(filename, flatten=True).astype("float")
+    return f
+
+
+#write image
+def writeImage(data,filename):
+    misc.toimage(data,cmin=0,cmax=255).save(filename)
+
+
+def window(seq, n=2):
+    """
+    Function taken from Python docs
+    Returns a sliding window (of width n) over data from the iterable
+    """
+    it = iter(seq)
+    result = tuple(islice(it, n))
+    if len(result) == n:
+        yield result    
+    for elem in it:
+        result = result[1:] + (elem,)
+        yield result
+
+
+def compute_error(boundaries, pointsBv, probs):
+    ""","""
+    error = 0
+    for (current, incoming), pv in zip(window(boundaries, 2), pointsBv):
+        for j in xrange(int(current), int(incoming)):
+            error += (j-pv) * (j-pv) * probs[j]
+    return error
+
+
+def LloydAlgorithm(imgData, levels=2, totalIterations =100, threshold=0.01):
     """Implement the Lloyd Max quantization algorithm"""
-    # get the intensity histogram
-    intensities = np.histogram(image, bins=np.arange(255))[0]
-    # get density function
-    # ToDo
-    # Initialize boundaries
-    av = np.arange(levels+1) * 256/levels
-    # Initialize quantization points
-    bv = (np.arange(levels+1) * 256/levels) + 256/(2*levels)
-    # iterate the equations
-    # ToDo
-    # implement stop condition
-    # ToDo
+
+    # first calculate the intensity histogram
+    histogram = np.histogram(imgData, bins=np.arange(257))[0]
+
+    # calculate PDF
+    probs = histogram/histogram.sum()
+
+    # initialize the boundaries and quantization points
+    boundaries = np.arange(levels+1) * 256/levels
+    pointsBv = (np.arange(levels) * 256/levels) + 256/(2*levels)
+
+    #iterate the equations
+    error = compute_error(boundaries, pointsBv, probs)
+    error1 = error
+    iterationCount = 0
+    stopFlag = False
+
+    while(iterationCount < totalIterations and stopFlag==False):
+        iterationCount+=1
+
+        #update boundaries
+        for i in range(1, levels):
+            boundaries[i] = (pointsBv[i] + pointsBv[i-1])/2.0
+
+        #update points
+        for i in range(levels-1):
+            numerator = 0.0
+            denominator = 0.0
+            currentBoundary = boundaries[i]
+            nextBoundary = boundaries[i+1]
+
+            for j in xrange(int(currentBoundary),int(nextBoundary)):
+                if(j>probs.size):
+                    break
+                numerator += j*probs[j]
+                denominator += probs[j]
+            if(numerator==0 or denominator==0):
+                pointsBv[i] = 0.0
+            else:
+                pointsBv[i] = float(numerator)/float(denominator)
+
+        # compute error
+        error = error1
+        error1 = compute_error(boundaries, pointsBv, probs)
+
+        if (error1 - error > threshold):
+            stopFlag = True
 
 
-# apply the program to a bright and to a dark image
-lloyd_max(images['portrait'])
+    rows, cols = imgData.shape
+    newImgData = np.ndarray(shape=(rows, cols))
+    for i in xrange(rows):
+        for j in xrange(cols):
+            for k in range(levels):
+                if(imgData[i,j]>=boundaries[k] and imgData[i,j]<boundaries[k+1]):
+                    break
+            newImgData[i,j] = pointsBv[k]
+
+    return newImgData
+
+
+image = readImage('images/bauckhage-gamma-2.png')
+result = LloydAlgorithm(image, levels=8)
+
+import matplotlib.pyplot as plt
+# plt.imshow(image,cmap='gray')
+plt.imshow(result,cmap='gray')
+plt.show()
+
+# plt.hist(image.ravel(), bins=256, range=[0, 256], cumulative=1, facecolor='blue', alpha=0.5)
+# plt.hist(result.ravel(), bins=256, range=[0, 256], cumulative=1, facecolor='blue', alpha=0.5)
+# plt.show()
+
+# histogram = np.histogram(result, bins=np.arange(257))[0]
+# misc.imshow(result)
+
+writeImage(result, 'resulting_images/result.png')
