@@ -21,7 +21,7 @@ def writeImage(data,filename):
     misc.toimage(data,cmin=0,cmax=255).save(filename)
 
 
-def plot3D(image, angle=0):
+def plot3D(image, name):
     """ """
     # downscaling has a "smoothing" effect
     image = scipy.misc.imresize(image, 0.15, interp='cubic')
@@ -31,9 +31,10 @@ def plot3D(image, angle=0):
     # create the figure
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    ax.plot_surface(xx, yy, image ,rstride=1, cstride=1, cmap=plt.cm.gray, linewidth=0)
-    ax.view_init(azim=angle)
-    plt.show()
+    ax.plot_surface(xx, yy, image ,rstride=1, cstride=1, cmap=plt.cm.bone, linewidth=0)
+    ax.view_init(azim=28, elev=55)
+    plt.savefig("resulting_images/" + name + ".png", bbox_inches="tight", transparent=True)
+    #plt.show()
 
 
 def log_image(img):
@@ -41,35 +42,36 @@ def log_image(img):
 
 
 def linear_fitting(l):
+
     rows, cols = l.shape
     row_arr = np.array(range(rows))
     col_arr = np.array(range(cols))
     ones = np.ones(rows*cols)
     x1 = np.repeat(row_arr, cols)
     x2 = np.tile(col_arr, rows)
-    X = np.vstack([x1, x2, ones]).T
 
+    X = np.vstack([x1, x2, ones]).T
     z = l.flatten()
 
+    z = l.flatten()
     w = lsq_solution_V3(X, z)
-    print w
 
     return np.reshape(np.dot(X, w), (rows, cols))
 
 
 def bilinear_fitting(l):
+
     rows, cols = l.shape
     row_arr = np.array(range(rows))
     col_arr = np.array(range(cols))
     ones = np.ones(rows * cols)
     x1 = np.repeat(row_arr, cols)
     x2 = np.tile(col_arr, rows)
-    X = np.vstack([x1 * x2, x1, x2, ones]).T
 
+    X = np.vstack([x1 * x2, x1, x2, ones]).T
     z = l.flatten()
 
     w = lsq_solution_V3(X, z)
-    print w
 
     return np.reshape(np.dot(X, w), (rows, cols))
 
@@ -79,30 +81,55 @@ def lsq_solution_V3(X, z):
     return w
 
 
-def illumination():
+def rescale(image, fmax, fmin):
+    scaled = ((image - image.max())/(image.max() - image.min())) * (fmax - fmin)
+    return scaled
+
+
+def illumination(img, pixels):
     """Implement illumination"""
 
-    img_portrait = readImage("images/portrait.png")
-    plot3D(img_portrait)
+    fmax = img.max()
+    fmin = img.min()
 
-    l = log_image(img_portrait)
-    plot3D(l)
+    plot3D(img, "portrait")
+    # get the log of the image
+    l = log_image(img)
 
     #using linear model
     i_l = linear_fitting(l)
-    plot3D(i_l)
-
-    print l.max(), l.min(), np.average(l)
-    print i_l.max(), i_l.min(), np.average(i_l)
-
+    plot3D(i_l, "linear")
     r_l = l - i_l
-    plot3D(r_l)
-
     r = np.exp(r_l)
+    plot3D(r, "linear_plot_{}".format(pixels))
+    misc.imsave("resulting_images/linear_image_{}.png".format(pixels), r)
 
     #using bilinear model
     i_l2 = bilinear_fitting(l)
-    plot3D(i_l2)
+    plot3D(i_l2, "bilinear")
+    r_l = l - i_l2
+    r = np.exp(r_l)
+    plot3D(r, "bilinear_plot_{}".format(pixels))
+    misc.imsave("resulting_images/bilinear_image_{}.png".format(pixels), r)
+
+    #r = rescale(r, fmax, fmin)
+    #misc.imshow(r)
+    #plot3D(r, "bilinear_plot_rescaled")
 
 
-illumination()
+# experiment with samples
+img_portrait = readImage("images/portrait.png")
+
+for vals in [250, 666, 2500, 25000]:
+    rows, cols = img_portrait.shape
+    empty = np.zeros((rows, cols)) 
+
+    random_indexes_cols = np.random.randint(cols, size=(vals, 1))
+    random_indexes_rows = np.random.randint(rows, size=(vals, 1))
+    random_indexes = np.hstack((random_indexes_rows, random_indexes_cols))
+
+    # dirty code
+    for i in random_indexes:
+        empty[i[0], i[1]] = img_portrait[i[0], i[1]]
+
+    illumination(empty, vals)
