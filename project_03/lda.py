@@ -16,8 +16,8 @@ import random
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
-TEST_DIR = 'uiuc/test1'
-TRAIN_DIR = 'uiuc/train1'
+TEST_DIR = 'uiuc/test'
+TRAIN_DIR = 'uiuc/train'
 
 def plotData(X_lda,label):
     ax = plt.subplot(222)
@@ -44,13 +44,16 @@ def readData(dirName):
     for root, _, files in os.walk(dirName):
         for filename in files:
             path = os.path.join(root, filename)
-            image = misc.imread(path, flatten=True).astype("float")
+            image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31))
             data = np.vstack((image.ravel(), data))
 
     label = np.char.array(files).rfind('Pos')
     label[np.where(label == -1)] = 0  # neg class
     label[np.where(label > 0)] = 1  # pos class
     return data,label
+
+def saveImage(imgData,filename):
+    misc.imsave(filename,imgData)
 
 def readTrainingData():
     return readData(TRAIN_DIR)
@@ -85,24 +88,34 @@ def getProjector(S_B,S_W):
     # Sort the (eigenvalue, eigenvector) tuples from high to low
     eig_pairs = sorted(eig_pairs, key=lambda k: k[0], reverse=True)
     W = np.hstack((eig_pairs[0][1].reshape(IMG_SIZE, 1), eig_pairs[1][1].reshape(IMG_SIZE, 1)))
-    return W
+    return W.real
 
 
-def evaluateClassifier(classifier,data,labels):
+def evaluateClassifier(classifier,data,labels,projectedLabels):
     tp=0
     fp=0
     tn=0
     fn=0
-    for row in enumerate(X_lda):
-        if(row[1][0]>=classifier):
-            tp+=1
+
+    for row in enumerate(data):
+        currentValue = row[1][0]*row[1][1]
+        if(currentValue>=classifier):
+            projectedLabels.append(1)
         else:
+            projectedLabels.append(0)
+
+    for i,row in enumerate(data):
+        if(projectedLabels[i]==1 and labels[i]==1):
+            tp+=1
+
+        if(projectedLabels[i]==1 and labels[i]==0):
+            fp+=1
+
+        if(projectedLabels[i]==0 and labels[i]==0):
+            tn+=1
+        if(projectedLabels[i]==0 and labels[i]==1):
             fn+=1
 
-        if(row[1][1]>=classifier):
-            tn+=1
-        else:
-            fp+=1
     precision = tp/float(tp+fp) if (tp+fp)>0 else 0
     recall = tp/float(tp+fn) if (tp+fn)>0 else 0
 
@@ -141,6 +154,23 @@ if __name__ == '__main__':
 
     #calculate projector matrix
     W = getProjector(S_B,S_W)
+
+    imgData = np.empty(shape=(31,81))
+    WCounter = 0
+    for i in range(31):
+        for j in range(81):
+            imgData[i][j] = W[WCounter][0].real
+            WCounter+=1
+    saveImage(imgData, 'out1.jpg')
+
+    imgData = np.empty(shape=(31, 81))
+    WCounter = 0
+    for i in range(31):
+        for j in range(81):
+            imgData[i][j] = W[WCounter][1].real
+            WCounter += 1
+    saveImage(imgData, 'out2.jpg')
+
     #plot W
     plt.plot(W)
     plt.grid()
@@ -156,20 +186,20 @@ if __name__ == '__main__':
     #X_lda = newData.dot(W)
     X_lda = np.empty(shape=(newData.shape[0],W.shape[1]))
     for i,row in enumerate(newData):
-        X_lda[i][0] = row.dot(W[:, 0].real)
-        X_lda[i][1] = row.dot(W[:, 1].real)
+        X_lda[i][0] = row.dot(W[:, 0])
+        X_lda[i][1] = row.dot(W[:, 1])
 
     plotData(X_lda, labels)
 
     #create k = 1,...,10 different classifier
     classifiers = [0.0,-0.1,-0.015,-0.02,0.5,-0.4,-0.5,0.66,-0.7,-0.73]
     bestThreshold = classifiers[0]
-    bestPerformance = evaluateClassifier(bestThreshold,X_lda,labels)
+    bestPerformance,precision,recall = evaluateClassifier(bestThreshold,X_lda,labels,projectedLabels)
     precisions = []
     recalls = []
     for threshold in classifiers:
         print("Threshold = ",threshold)
-        performance,precision,recall = evaluateClassifier(threshold,X_lda,labels)
+        performance,precision,recall = evaluateClassifier(threshold,X_lda,labels,projectedLabels)
         precisions.append(precision)
         recalls.append(recall)
         print("Performance = ",performance)
