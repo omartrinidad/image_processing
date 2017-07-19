@@ -18,7 +18,7 @@ import random
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
 TEST_DIR = 'uiuc/test'
-TRAIN_DIR = 'uiuc/train1'
+TRAIN_DIR = 'uiuc/train'
 
 def plotData(X_lda,label):
     plt.clf()
@@ -103,7 +103,7 @@ def evaluateClassifier(classifier,data,labels):
     fn=0
     projectedLabels = []
     for i in range(len(data[0])):
-        currentValue = data[0][i]+data[1][i]/2.0
+        currentValue = (data[0][i]+data[1][i])/2.0
         if(currentValue>=classifier):
             projectedLabels.append(1) #pos class
         else:
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     print X_lda
 
     #create k = 1,...,10 different classifier
-    classifiers = np.random.uniform(0.0115,0.0120,10)
+    classifiers = np.random.uniform(0.01,means[1].mean(),100)
     bestThreshold = classifiers[0]
     bestPerformance,precision,recall,projectedLabels = evaluateClassifier(bestThreshold,X_lda,labels)
     precisions = np.zeros(classifiers.shape)
@@ -202,13 +202,17 @@ if __name__ == '__main__':
         precisions[i] = precision
         recalls[i] = recall
         print("Performance = ",performance)
+        print("Precision = ", precision)
+        print("Recall = ", recall)
+
         if(performance>bestPerformance):
             bestPerformance = performance
             bestThreshold = threshold
 
     print('Best Threshold = ',bestThreshold)
     print("Best Performance = ",bestPerformance)
-
+    print("Projected labels: ")
+    print projectedLabels
 
     #plot output
     plotData(X_lda, labels)
