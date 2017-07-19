@@ -12,12 +12,13 @@ import os
 from scipy import misc
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+from sklearn import preprocessing
 import random
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
 TEST_DIR = 'uiuc/test'
-TRAIN_DIR = 'uiuc/train'
+TRAIN_DIR = 'uiuc/train1'
 
 def plotData(X_lda,label):
     ax = plt.subplot(222)
@@ -44,9 +45,10 @@ def readData(dirName):
     for root, _, files in os.walk(dirName):
         for filename in files:
             path = os.path.join(root, filename)
-            image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31))
-            data = np.vstack((image.ravel(), data))
-
+            image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31)).ravel()
+            image = (image-image.mean())/image.var()
+            data = np.vstack((image, data))
+    #data = preprocessing.scale(data)
     label = np.char.array(files).rfind('Pos')
     label[np.where(label == -1)] = 0  # neg class
     label[np.where(label > 0)] = 1  # pos class
@@ -100,9 +102,9 @@ def evaluateClassifier(classifier,data,labels,projectedLabels):
     for row in enumerate(data):
         currentValue = row[1][0]*row[1][1]
         if(currentValue>=classifier):
-            projectedLabels.append(1)
+            projectedLabels.append(1) #pos class
         else:
-            projectedLabels.append(0)
+            projectedLabels.append(0)   #neg class
 
     for i,row in enumerate(data):
         if(projectedLabels[i]==1 and labels[i]==1):
@@ -192,7 +194,7 @@ if __name__ == '__main__':
     plotData(X_lda, labels)
 
     #create k = 1,...,10 different classifier
-    classifiers = [0.0,-0.1,-0.015,-0.02,0.5,-0.4,-0.5,0.66,-0.7,-0.73]
+    classifiers = np.random.uniform(X_lda.min(),X_lda.max(),10)
     bestThreshold = classifiers[0]
     bestPerformance,precision,recall = evaluateClassifier(bestThreshold,X_lda,labels,projectedLabels)
     precisions = []
