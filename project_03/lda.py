@@ -163,12 +163,8 @@ if __name__ == '__main__':
 
     # calculate within class covariance matrix
     S_W = getSWMatrix(means, dataset)
-
     #calculate between class covariance matrix
     S_B = getSBMatrix(means,overall_mean,dataset)
-
-
-
     #calculate projector matrix
     W = getProjector(S_B,S_W)
 
@@ -188,12 +184,13 @@ if __name__ == '__main__':
     #         WCounter += 1
     # saveImage(imgData, 'out2.jpg')
 
-    #plot W
+    # plot W
+    ax = plt.figure()
     plt.plot(W)
     plt.grid()
     plt.tight_layout()
+    plt.savefig("W.png", dpi=ax.dpi)
     plt.show()
-
 
     #read new data
     newData, labels = readTrainingData()
@@ -203,7 +200,6 @@ if __name__ == '__main__':
     #X_lda = newData.dot(W)
     X_lda = newData.dot(W[:, 0])
     plotData(X_lda, labels)
-    print X_lda
 
     #create k = 1,...,10 different classifier
     classifiers = np.random.uniform(X_lda.min(),X_lda.max(),10)
@@ -221,18 +217,19 @@ if __name__ == '__main__':
             bestPerformance = performance
             bestThreshold = threshold
 
-    print('Best Threshold = ',bestThreshold)
-    print("Best Performance = ",bestPerformance)
+    print('Best Threshold = ', bestThreshold)
+    print("Best Performance = ", bestPerformance)
 
+    ax = plt.figure()
     plt.clf()
     plt.plot(recalls, precisions, lw=2, color='navy',
          label='Precision-Recall curve')
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.title('Precision-Recall')
-    plt.xlim(precisions.min(),recalls.max())
-    plt.ylim(precisions.min(),recalls.max())
+    plt.xlim(precisions.min(), recalls.max())
+    plt.ylim(precisions.min(), recalls.max())
     plt.grid()
     plt.tight_layout()
-    plt.show()
     plt.savefig("precision_recall.png", dpi=ax.dpi)
+    plt.show()
