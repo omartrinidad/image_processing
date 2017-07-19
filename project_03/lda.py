@@ -26,7 +26,7 @@ def plotData(X_lda, label):
     Plot result from LDA
     """
     
-    ax = plt.figure()
+    plt.clf()
     for lab, marker, color in zip(range(2), ('*', '^'), ('blue', 'red')):
         plt.scatter(x=X_lda[0].real[label == lab],
                     y=X_lda[1].real[label == lab],
@@ -40,10 +40,10 @@ def plotData(X_lda, label):
     leg = plt.legend(loc='upper right', fancybox=True)
     leg.get_frame().set_alpha(0.5)
     plt.title('LDA')
-
+    plt.xlim(X_lda[0].min() - 0.01, X_lda[0].max() + 0.01)
+    plt.ylim(X_lda[0].min() - 0.01, X_lda[0].max() + 0.01)
     plt.grid()
-    plt.tight_layout()
-    plt.savefig("lda.png", dpi=ax.dpi)
+    plt.savefig("lda.png")
     plt.show()
 
 
@@ -185,13 +185,12 @@ if __name__ == '__main__':
             WCounter += 1
     saveImage(imgData, 'out2.jpg')
 
-
     # plot W
-    ax = plt.figure()
+    plt.clf()
     plt.plot(W)
     plt.grid()
     plt.tight_layout()
-    plt.savefig("W.png", dpi=ax.dpi)
+    plt.savefig("W.png")
     plt.show()
 
     #read new data
@@ -208,7 +207,7 @@ if __name__ == '__main__':
     print(X_lda)
 
     #create k = 1,...,10 different classifier
-    classifiers = np.random.uniform(X_lda.min(),X_lda.max(),10)
+    classifiers = np.random.uniform(0.0115,0.0120,10)
     bestThreshold = classifiers[0]
     bestPerformance,precision,recall,projectedLabels = evaluateClassifier(bestThreshold,X_lda,labels)
     precisions = np.zeros(classifiers.shape)
@@ -226,15 +225,8 @@ if __name__ == '__main__':
     print('Best Threshold = ', bestThreshold)
     print("Best Performance = ", bestPerformance)
 
-    # plot W
-    ax = plt.figure()
-    plt.plot(W)
-    plt.grid()
-    plt.tight_layout()
-    plt.savefig("W.png", dpi=ax.dpi)
-    plt.show()
 
-    # plot output
+    #plot output
     plotData(X_lda, labels)
 
     # Plot Precision Recall
@@ -247,6 +239,5 @@ if __name__ == '__main__':
     plt.xlim(precisions.min()-0.5,recalls.max()+0.5)
     plt.ylim(precisions.min()-0.5,recalls.max()+0.5)
     plt.grid()
-    plt.tight_layout()
-    plt.savefig("precision_recall.png", dpi=ax.dpi)
+    plt.savefig("precision_recall.png")
     plt.show()
