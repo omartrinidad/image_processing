@@ -18,14 +18,22 @@ import random
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
 TEST_DIR = 'uiuc/test'
-TRAIN_DIR = 'uiuc/train'
+TRAIN_DIR = 'uiuc/train1'
+
+
+
+def draw(vector, shape):
+    plt.figure()
+    plt.imshow(np.reshape(vector, shape), 'gray')
+    plt.axis('off')
+    plt.show()
 
 def plotData(X_lda,label):
     plt.clf()
     ax = plt.subplot(222)
     for lab, marker, color in zip(range(2), ('*', '^'), ('blue', 'red')):
-        plt.scatter(x=X_lda[0].real[label == lab],
-                    y=X_lda[1].real[label == lab],
+        plt.scatter(x=X_lda[label == lab],
+                    y=X_lda[label == lab],
                     marker=marker,
                     color=color,
                     alpha=0.5,
@@ -92,34 +100,41 @@ def getProjector(S_B,S_W):
     eig_pairs = [(np.abs(eig_vals[i]), eig_vecs[:, i]) for i in range(len(eig_vals))]
     # Sort the (eigenvalue, eigenvector) tuples from high to low
     eig_pairs = sorted(eig_pairs, key=lambda k: k[0], reverse=True)
-    W = np.hstack((eig_pairs[0][1].reshape(IMG_SIZE, 1), eig_pairs[1][1].reshape(IMG_SIZE, 1)))
+    #W = np.hstack((eig_pairs[0][1].reshape(IMG_SIZE, 1), eig_pairs[1][1].reshape(IMG_SIZE, 1)))
+    W = np.hstack((eig_pairs[0][1].reshape(IMG_SIZE, 1)))
     return W.real
 
 
-def evaluateClassifier(classifier,data,labels):
+def evaluateClassifier(classifier,data,W,labels):
     tp=0
     fp=0
     tn=0
     fn=0
     projectedLabels = []
-    for i in range(len(data[0])):
-        currentValue = (data[0][i]+data[1][i])/2.0
-        if(currentValue>=classifier):
-            projectedLabels.append(1) #pos class
+
+    for item in data[labels==1]: #check for pos
+        if np.dot(W, item) >= classifier:
+            prediction = 1
         else:
-            projectedLabels.append(0)   #neg class
+            prediction = 0
 
-    for i in range(len(data[0])):
-        if(projectedLabels[i]==1 and labels[i]==1):
-            tp+=1
-
-        if(projectedLabels[i]==1 and labels[i]==0):
+        if(prediction!=1):
             fp+=1
+        else:
+            tp+=1
+        projectedLabels.append(prediction)
 
-        if(projectedLabels[i]==0 and labels[i]==0):
-            tn+=1
-        if(projectedLabels[i]==0 and labels[i]==1):
-            fn+=1
+    for item in data[labels==0]: #check for neg
+        if np.dot(W, item) >= classifier:
+            prediction = 1
+        else:
+            prediction = 0
+
+        if (prediction != 0):
+            fn += 1
+        else:
+            tn += 1
+        projectedLabels.append(prediction)
 
     precision = tp/float(tp+fp) if (tp+fp)>0 else 0
     recall = tp/float(tp+fn) if (tp+fn)>0 else 0
@@ -151,31 +166,16 @@ if __name__ == '__main__':
 
     # calculate within class covariance matrix
     S_W = getSWMatrix(means, dataset)
+    draw(S_W,S_W.shape)
 
     #calculate between class covariance matrix
     S_B = getSBMatrix(means,overall_mean,dataset)
+    draw(S_B,S_B.shape)
 
 
     #calculate projector matrix
     W = getProjector(S_B,S_W)
-
-    imgData = np.empty(shape=(31,81))
-    WCounter = 0
-    for i in range(31):
-        for j in range(81):
-            imgData[i][j] = W[WCounter][0].real
-            WCounter+=1
-    saveImage(imgData, 'out1.jpg')
-
-    imgData = np.empty(shape=(31, 81))
-    WCounter = 0
-    for i in range(31):
-        for j in range(81):
-            imgData[i][j] = W[WCounter][1].real
-            WCounter += 1
-    saveImage(imgData, 'out2.jpg')
-
-
+    draw(W,(81,31))
 
 
     #read new data
@@ -183,22 +183,30 @@ if __name__ == '__main__':
     projectedLabels = []
 
     #X_lda = newData.dot(W)
-    X_lda1 = newData.dot(W[:, 0])
-    X_lda2 = newData.dot(W[:, 1])
-    X_lda = np.empty(shape=(W.shape[1],newData.shape[0]))
-    X_lda[0] = X_lda1
-    X_lda[1] = X_lda2
+    X_lda = np.empty(shape=(newData.shape[0],))
+    for i,row in enumerate(newData):
+        X_lda[i] = row.dot(W)
     print X_lda
 
+    mu =[]
+    mu.append(np.dot(W.T, means[0]))
+    mu.append(np.dot(W.T, means[1]))
+    print mu
+
     #create k = 1,...,10 different classifier
-    classifiers = np.random.uniform(0.01,means[1].mean(),100)
+    cl_total = 10000
+    classifiers = []
+    for index in range(cl_total):
+        theta = mu[0] + abs(float(mu[1] - mu[0])) / (cl_total + 1) * (index + 1)
+        classifiers.append(theta)
+
     bestThreshold = classifiers[0]
-    bestPerformance,precision,recall,projectedLabels = evaluateClassifier(bestThreshold,X_lda,labels)
-    precisions = np.zeros(classifiers.shape)
-    recalls = np.zeros(classifiers.shape)
+    bestPerformance,precision,recall,projectedLabels = evaluateClassifier(bestThreshold,newData,W,labels)
+    precisions = np.zeros((len(classifiers),))
+    recalls = np.zeros((len(classifiers)))
     for i,threshold in enumerate(classifiers):
         print("Threshold = ",threshold)
-        performance,precision,recall,projectedLabels = evaluateClassifier(threshold,X_lda,labels)
+        performance,precision,recall,projectedLabels = evaluateClassifier(threshold,newData,W,labels)
         precisions[i] = precision
         recalls[i] = recall
         print("Performance = ",performance)
