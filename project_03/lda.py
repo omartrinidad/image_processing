@@ -9,19 +9,27 @@ Python 3
 import tarfile
 import numpy as np
 import os
-from scipy import misc
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import random
+from scipy import misc
 
-IMG_SIZE = 2511
-label_dict = {0: 'Background', 1: 'Car'}
-TEST_DIR = 'uiuc/test'
-TRAIN_DIR = 'uiuc/train'
+
+def get_sample(dataset, labels, size):
+    """
+    """
+    neg = dataset[np.where(labels==0)][0:size]
+    pos = dataset[np.where(labels==1)][0:size]
+    ds = np.vstack((pos, neg))
+    labels = np.hstack((np.zeros(size), np.ones(size)))
+
+    return ds, labels
+
 
 def plotData(X_lda,label):
     ax = plt.subplot(222)
     for lab, marker, color in zip(range(2), ('*', '^'), ('blue', 'red')):
+        print(lab, marker, color)
         plt.scatter(x=X_lda[:, 0].real[label == lab],
                     y=X_lda[:, 1].real[label == lab],
                     marker=marker,
@@ -39,6 +47,7 @@ def plotData(X_lda,label):
     plt.tight_layout()
     plt.show()
 
+
 def readData(dirName):
     data = np.empty(shape=(IMG_SIZE,))
     for root, _, files in os.walk(dirName):
@@ -52,16 +61,20 @@ def readData(dirName):
     label[np.where(label > 0)] = 1  # pos class
     return data,label
 
+
 def saveImage(imgData,filename):
     misc.imsave(filename,imgData)
 
+
 def readTrainingData():
     return readData(TRAIN_DIR)
+
+
 def readTestData():
     return readData(TEST_DIR)
 
 
-def getSBMatrix(mean_vec,overall_mean,dataset):
+def getSBMatrix(means, overall_mean, dataset):
     S_B = np.zeros((dataset.shape[1], dataset.shape[1]))
     for i, mean_vec in enumerate(means):
         n = dataset[np.where(labels == i)].shape[0]
@@ -70,7 +83,8 @@ def getSBMatrix(mean_vec,overall_mean,dataset):
         S_B += n * (mean_vec - overall_mean).dot((mean_vec - overall_mean).T)
     return S_B
 
-def getSWMatrix(means,dataset):
+
+def getSWMatrix(means, dataset):
     S_W = np.zeros(S_B.shape)
     for i, mean_vec in enumerate(means):
         class_scatter = np.zeros(S_W.shape)
@@ -80,7 +94,8 @@ def getSWMatrix(means,dataset):
         S_W += class_scatter  # sum class scatter matrices
     return S_W
 
-def getProjector(S_B,S_W):
+
+def getProjector(S_B, S_W):
     eig_vals, eig_vecs = np.linalg.eig(np.linalg.inv(S_W).dot(S_B))
 
     # Make a list of (eigenvalue, eigenvector) tuples
@@ -91,11 +106,10 @@ def getProjector(S_B,S_W):
     return W.real
 
 
-def evaluateClassifier(classifier,data,labels,projectedLabels):
-    tp=0
-    fp=0
-    tn=0
-    fn=0
+def evaluateClassifier(classifier, data, labels, projectedLabels):
+
+    tp, fp, tn, fn = 0, 0, 0, 0
+    print(labels)
 
     for row in enumerate(data):
         currentValue = row[1][0]*row[1][1]
@@ -104,7 +118,7 @@ def evaluateClassifier(classifier,data,labels,projectedLabels):
         else:
             projectedLabels.append(0)
 
-    for i,row in enumerate(data):
+    for i, row in enumerate(data):
         if(projectedLabels[i]==1 and labels[i]==1):
             tp+=1
 
@@ -119,105 +133,102 @@ def evaluateClassifier(classifier,data,labels,projectedLabels):
     precision = tp/float(tp+fp) if (tp+fp)>0 else 0
     recall = tp/float(tp+fn) if (tp+fn)>0 else 0
 
+    print("precision - - - >",  precision)
+    print("recall - - - - >", recall)
+
     return (tp+tn)/float(tp+tn+fp+fn),precision,recall
 
 
+IMG_SIZE = 2511
+label_dict = {0: 'Background', 1: 'Car'}
+TEST_DIR = 'uiuc/test'
+TRAIN_DIR = 'uiuc/train'
+
+dataset, labels = readTrainingData()
+dataset = np.delete(dataset, (-1), axis=0)
+# dataset, labels = get_sample(dataset, labels, 10)
+
+# calculate means for two classes
+means = []
+means.append(np.mean(dataset[np.where(labels==0)], axis=0))
+means.append(np.mean(dataset[np.where(labels==1)], axis=0))
+
+# calculate overall mean
+overall_mean = np.mean(dataset, axis=0)
+
+# calculate between class covariance matrix
+S_B = getSBMatrix(means, overall_mean, dataset)
+
+#calculate within class covariance matrix
+S_W = getSWMatrix(means, dataset)
+
+# calculate projector matrix
+W = getProjector(S_B, S_W)
+
+imgData = np.empty(shape=(31,81))
+WCounter = 0
+for i in range(31):
+    for j in range(81):
+        imgData[i][j] = W[WCounter][0].real
+        WCounter+=1
+saveImage(imgData, 'out1.jpg')
+
+imgData = np.empty(shape=(31, 81))
+WCounter = 0
+for i in range(31):
+    for j in range(81):
+        imgData[i][j] = W[WCounter][1].real
+        WCounter += 1
+saveImage(imgData, 'out2.jpg')
+
+#plot W
+plt.plot(W)
+plt.grid()
+plt.tight_layout()
+plt.show()
 
 
+#read new data
+newData, labels = readTrainingData()
+newData = np.delete(newData, (-1), axis=0)
+# newData, labels = get_sample(newData, labels, 10)
+projectedLabels = []
 
+#X_lda = newData.dot(W)
+X_lda = np.empty(shape=(newData.shape[0], W.shape[1]))
+for i,row in enumerate(newData):
+    X_lda[i][0] = row.dot(W[:, 0])
+    X_lda[i][1] = row.dot(W[:, 1])
 
+plotData(X_lda, labels)
 
+#create k = 1,...,10 different classifier
+classifiers = [0.0,-0.1,-0.015,-0.02,0.5,-0.4,-0.5,0.66,-0.7,-0.73]
+bestThreshold = classifiers[0]
+bestPerformance, precision, recall = evaluateClassifier(bestThreshold, 
+        X_lda, labels, projectedLabels)
+precisions = []
+recalls = []
+for threshold in classifiers:
+    # print("Threshold = ",threshold)
+    performance, precision, recall = evaluateClassifier(threshold, X_lda,
+            labels, projectedLabels)
+    precisions.append(precision)
+    recalls.append(recall)
+    # print("Performance = ",performance)
+    if(performance>bestPerformance):
+        bestPerformance = performance
+        bestThreshold = threshold
 
+print('Best Threshold = ',bestThreshold)
+print("Best Performance = ",bestPerformance)
 
-
-
-
-
-if __name__ == '__main__':
-    dataset,labels = readTrainingData()
-    dataset = np.delete(dataset, (-1), axis=0)
-
-    #calculate means for two classes
-    means = []
-    means.append(np.mean(dataset[np.where(labels==0)],axis=0));
-    means.append(np.mean(dataset[np.where(labels==1)],axis=0));
-
-    #calculate overall mean
-    overall_mean = np.mean(dataset, axis=0)
-
-
-    #calculate between class covariance matrix
-    S_B = getSBMatrix(means,overall_mean,dataset)
-
-    #calculate within class covariance matrix
-    S_W = getSWMatrix(means,dataset)
-
-    #calculate projector matrix
-    W = getProjector(S_B,S_W)
-
-    imgData = np.empty(shape=(31,81))
-    WCounter = 0
-    for i in range(31):
-        for j in range(81):
-            imgData[i][j] = W[WCounter][0].real
-            WCounter+=1
-    saveImage(imgData, 'out1.jpg')
-
-    imgData = np.empty(shape=(31, 81))
-    WCounter = 0
-    for i in range(31):
-        for j in range(81):
-            imgData[i][j] = W[WCounter][1].real
-            WCounter += 1
-    saveImage(imgData, 'out2.jpg')
-
-    #plot W
-    plt.plot(W)
-    plt.grid()
-    plt.tight_layout()
-    plt.show()
-
-
-    #read new data
-    newData,labels = readTrainingData()
-    newData = np.delete(newData, (-1), axis=0)
-    projectedLabels = []
-
-    #X_lda = newData.dot(W)
-    X_lda = np.empty(shape=(newData.shape[0],W.shape[1]))
-    for i,row in enumerate(newData):
-        X_lda[i][0] = row.dot(W[:, 0])
-        X_lda[i][1] = row.dot(W[:, 1])
-
-    plotData(X_lda, labels)
-
-    #create k = 1,...,10 different classifier
-    classifiers = [0.0,-0.1,-0.015,-0.02,0.5,-0.4,-0.5,0.66,-0.7,-0.73]
-    bestThreshold = classifiers[0]
-    bestPerformance,precision,recall = evaluateClassifier(bestThreshold,X_lda,labels,projectedLabels)
-    precisions = []
-    recalls = []
-    for threshold in classifiers:
-        print("Threshold = ",threshold)
-        performance,precision,recall = evaluateClassifier(threshold,X_lda,labels,projectedLabels)
-        precisions.append(precision)
-        recalls.append(recall)
-        print("Performance = ",performance)
-        if(performance>bestPerformance):
-            bestPerformance = performance
-            bestThreshold = threshold
-
-    print('Best Threshold = ',bestThreshold)
-    print("Best Performance = ",bestPerformance)
-
-    plt.clf()
-    plt.plot(recalls, precisions, lw=2, color='navy',
-         label='Precision-Recall curve')
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.title('Precision-Recall')
-    plt.grid()
-    plt.tight_layout()
-    plt.show()
-
-
+plt.clf()
+plt.plot(recalls, precisions, lw=2, color='navy',
+     label='Precision-Recall curve')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Precision-Recall')
+plt.grid()
+plt.tight_layout()
+plt.show()
