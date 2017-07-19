@@ -21,6 +21,7 @@ TEST_DIR = 'uiuc/test'
 TRAIN_DIR = 'uiuc/train1'
 
 def plotData(X_lda,label):
+    plt.clf()
     ax = plt.subplot(222)
     for lab, marker, color in zip(range(2), ('*', '^'), ('blue', 'red')):
         plt.scatter(x=X_lda[0].real[label == lab],
@@ -35,9 +36,10 @@ def plotData(X_lda,label):
     leg = plt.legend(loc='upper right', fancybox=True)
     leg.get_frame().set_alpha(0.5)
     plt.title('LDA')
-
+    plt.xlim(X_lda[0].min() - 0.01, X_lda[0].max() + 0.01)
+    plt.ylim(X_lda[0].min() - 0.01, X_lda[0].max() + 0.01)
     plt.grid()
-    plt.tight_layout()
+    #plt.tight_layout()
     plt.show()
 
 def readData(dirName):
@@ -189,7 +191,7 @@ if __name__ == '__main__':
     print X_lda
 
     #create k = 1,...,10 different classifier
-    classifiers = np.random.uniform(X_lda.min(),X_lda.max(),10)
+    classifiers = np.random.uniform(0.0115,0.0120,10)
     bestThreshold = classifiers[0]
     bestPerformance,precision,recall,projectedLabels = evaluateClassifier(bestThreshold,X_lda,labels)
     precisions = np.zeros(classifiers.shape)
@@ -207,14 +209,14 @@ if __name__ == '__main__':
     print('Best Threshold = ',bestThreshold)
     print("Best Performance = ",bestPerformance)
 
-    # plot W
-    plt.plot(W)
-    plt.grid()
-    plt.tight_layout()
-    plt.show()
 
     #plot output
     plotData(X_lda, labels)
+
+    # plot W
+    plt.plot(W)
+    plt.grid()
+    plt.show()
 
     plt.clf()
     plt.plot(recalls, precisions, lw=2, color='navy',
@@ -225,7 +227,6 @@ if __name__ == '__main__':
     plt.xlim(precisions.min()-0.5,recalls.max()+0.5)
     plt.ylim(precisions.min()-0.5,recalls.max()+0.5)
     plt.grid()
-    plt.tight_layout()
     plt.show()
 
 
