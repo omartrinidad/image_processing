@@ -63,6 +63,48 @@ def Gram_Schmidt(vecs, row_wise_storage=True, tol=1E-10):
     return np.transpose(V) if row_wise_storage else V
 
 
+
+def evaluateClassifier(classifier,newData,W,labels,projectedLabels):
+    tp=0
+    fp=0
+    tn=0
+    fn=0
+
+    for i in range(newData.shape[0]):
+        img = newData[i]
+        pp = img*W
+        px = (np.mean(pp) - np.var(pp))*1000.0
+        print px
+        if(px<classifier):
+            projectedLabels[i] = abs(1/float(len(labels)))*-1
+        else:
+            projectedLabels[i] = abs(1/float(len(labels)))
+
+    print projectedLabels
+
+    for i in range(len(labels)):
+        if(projectedLabels[i]==1 and labels[i]==1):
+            tp+=1
+
+        if(projectedLabels[i]==1 and labels[i]==0):
+            fp+=1
+
+        if(projectedLabels[i]==0 and labels[i]==0):
+            tn+=1
+        if(projectedLabels[i]==0 and labels[i]==1):
+            fn+=1
+
+    precision = tp/float(tp+fp) if (tp+fp)>0 else 0
+    recall = tp/float(tp+fn) if (tp+fn)>0 else 0
+
+    divisor = float(tp+tn+fp+fn) if float(tp+tn+fp+fn)>0 else 1
+    return (tp+tn)/divisor,precision,recall
+
+
+
+
+
+
 if __name__ == '__main__':
     dataset, labels = readTrainingData()
 
@@ -96,7 +138,7 @@ if __name__ == '__main__':
             contractionV = np.empty((dataset.shape[0], 81))
             for l in range(dataset.shape[0]):
                 img = dataset[l]
-                contractionV[l] = np.dot(img, v_temp)
+                contractionV[l] = np.dot(img, v)
             u1 = np.linalg.inv(np.dot(contractionV.T, contractionV))
             u2 = np.dot(contractionV.T, labels)
             u_temp = np.dot(u1, u2)
@@ -119,16 +161,45 @@ if __name__ == '__main__':
 
     misc.imsave('tensorWOut.jpg',W)
 
+    # read new data
+    newData, labels = readTrainingData()
+    projectedLabels = np.zeros(newData.shape[0])
+
+
+    # create k = 1,...,10 different classifier
+    classifiers = np.random.uniform(-10,10,10)
+    bestThreshold = classifiers[0]
+    bestPerformance, precision, recall = evaluateClassifier(bestThreshold,newData,W, labels, projectedLabels)
+    precisions = []
+    recalls = []
+    for threshold in classifiers:
+        print("Threshold = ",threshold)
+        performance,precision,recall = evaluateClassifier(threshold,newData,W,labels,projectedLabels)
+        precisions.append(precision)
+        recalls.append(recall)
+        print("Performance = ",performance)
+        if(performance>bestPerformance):
+            bestPerformance = performance
+            bestThreshold = threshold
+
+    print('Best Threshold = ',bestThreshold)
+    print("Best Performance = ",bestPerformance)
+    plt.clf()
+    plt.plot(recalls, precisions, lw=2, color='navy',
+             label='Precision-Recall curve')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Precision-Recall')
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
+
+
     print W
     # plot W
     plt.plot(W)
     plt.grid()
     plt.tight_layout()
     plt.show()
-
-    # read new data
-    newData, labels = readTrainingData()
-    projectedLabels = []
-
-
 
