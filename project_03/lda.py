@@ -23,8 +23,8 @@ TRAIN_DIR = 'uiuc/train1'
 def plotData(X_lda,label):
     ax = plt.subplot(222)
     for lab, marker, color in zip(range(2), ('*', '^'), ('blue', 'red')):
-        plt.scatter(x=X_lda.real[label == lab],
-                    y=X_lda.real[label == lab],
+        plt.scatter(x=X_lda[0].real[label == lab],
+                    y=X_lda[1].real[label == lab],
                     marker=marker,
                     color=color,
                     alpha=0.5,
@@ -94,20 +94,20 @@ def getProjector(S_B,S_W):
     return W.real
 
 
-def evaluateClassifier(classifier,data,labels,projectedLabels):
+def evaluateClassifier(classifier,data,labels):
     tp=0
     fp=0
     tn=0
     fn=0
-
-    for row in range(len(data)):
-        currentValue = data[row]#row[1][0]*row[1][1]
-        if(row>=classifier):
+    projectedLabels = []
+    for i in range(len(data[0])):
+        currentValue = data[0][i]+data[1][i]/2.0
+        if(currentValue>=classifier):
             projectedLabels.append(1) #pos class
         else:
             projectedLabels.append(0)   #neg class
 
-    for i in range(len(data)):
+    for i in range(len(data[0])):
         if(projectedLabels[i]==1 and labels[i]==1):
             tp+=1
 
@@ -122,7 +122,7 @@ def evaluateClassifier(classifier,data,labels,projectedLabels):
     precision = tp/float(tp+fp) if (tp+fp)>0 else 0
     recall = tp/float(tp+fn) if (tp+fn)>0 else 0
 
-    return (tp+tn)/float(tp+tn+fp+fn),precision,recall
+    return (tp+tn)/float(tp+tn+fp+fn),precision,recall,projectedLabels
 
 
 
@@ -154,7 +154,6 @@ if __name__ == '__main__':
     S_B = getSBMatrix(means,overall_mean,dataset)
 
 
-
     #calculate projector matrix
     W = getProjector(S_B,S_W)
 
@@ -166,19 +165,15 @@ if __name__ == '__main__':
             WCounter+=1
     saveImage(imgData, 'out1.jpg')
 
-    # imgData = np.empty(shape=(31, 81))
-    # WCounter = 0
-    # for i in range(31):
-    #     for j in range(81):
-    #         imgData[i][j] = W[WCounter][1].real
-    #         WCounter += 1
-    # saveImage(imgData, 'out2.jpg')
+    imgData = np.empty(shape=(31, 81))
+    WCounter = 0
+    for i in range(31):
+        for j in range(81):
+            imgData[i][j] = W[WCounter][1].real
+            WCounter += 1
+    saveImage(imgData, 'out2.jpg')
 
-    #plot W
-    plt.plot(W)
-    plt.grid()
-    plt.tight_layout()
-    plt.show()
+
 
 
     #read new data
@@ -186,19 +181,22 @@ if __name__ == '__main__':
     projectedLabels = []
 
     #X_lda = newData.dot(W)
-    X_lda = newData.dot(W[:, 0])
-    plotData(X_lda, labels)
+    X_lda1 = newData.dot(W[:, 0])
+    X_lda2 = newData.dot(W[:, 1])
+    X_lda = np.empty(shape=(W.shape[1],newData.shape[0]))
+    X_lda[0] = X_lda1
+    X_lda[1] = X_lda2
     print X_lda
 
     #create k = 1,...,10 different classifier
     classifiers = np.random.uniform(X_lda.min(),X_lda.max(),10)
     bestThreshold = classifiers[0]
-    bestPerformance,precision,recall = evaluateClassifier(bestThreshold,X_lda,labels,projectedLabels)
+    bestPerformance,precision,recall,projectedLabels = evaluateClassifier(bestThreshold,X_lda,labels)
     precisions = np.zeros(classifiers.shape)
     recalls = np.zeros(classifiers.shape)
     for i,threshold in enumerate(classifiers):
         print("Threshold = ",threshold)
-        performance,precision,recall = evaluateClassifier(threshold,X_lda,labels,projectedLabels)
+        performance,precision,recall,projectedLabels = evaluateClassifier(threshold,X_lda,labels)
         precisions[i] = precision
         recalls[i] = recall
         print("Performance = ",performance)
@@ -209,14 +207,23 @@ if __name__ == '__main__':
     print('Best Threshold = ',bestThreshold)
     print("Best Performance = ",bestPerformance)
 
+    # plot W
+    plt.plot(W)
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
+    #plot output
+    plotData(X_lda, labels)
+
     plt.clf()
     plt.plot(recalls, precisions, lw=2, color='navy',
          label='Precision-Recall curve')
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.title('Precision-Recall')
-    plt.xlim(precisions.min(),recalls.max())
-    plt.ylim(precisions.min(),recalls.max())
+    plt.xlim(precisions.min()-0.5,recalls.max()+0.5)
+    plt.ylim(precisions.min()-0.5,recalls.max()+0.5)
     plt.grid()
     plt.tight_layout()
     plt.show()
