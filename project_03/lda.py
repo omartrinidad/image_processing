@@ -28,8 +28,8 @@ def plotData(X_lda, label):
     
     ax = plt.figure()
     for lab, marker, color in zip(range(2), ('*', '^'), ('blue', 'red')):
-        plt.scatter(x=X_lda[:, 0].real[label == lab],
-                    y=X_lda[:, 1].real[label == lab],
+        plt.scatter(x=X_lda.real[label == lab],
+                    y=X_lda.real[label == lab],
                     marker=marker,
                     color=color,
                     alpha=0.5,
@@ -59,14 +59,15 @@ def get_sample(dataset, labels, size):
 
 
 def readData(dirName):
-    data = np.empty(shape=(IMG_SIZE,))
     for root, _, files in os.walk(dirName):
+        data = np.zeros(shape=(len(files),IMG_SIZE))
+        counter =0
         for filename in files:
             path = os.path.join(root, filename)
             image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31)).ravel()
-            image = (image-image.mean())/image.var()
-            data = np.vstack((image, data))
-    #data = preprocessing.scale(data)
+            data[counter] = image
+            counter+=1
+    data = preprocessing.normalize(data)
     label = np.char.array(files).rfind('Pos')
     label[np.where(label == -1)] = 0  # neg class
     label[np.where(label > 0)] = 1  # pos class
@@ -96,7 +97,7 @@ def getSBMatrix(mean_vec,overall_mean,dataset):
 
 
 def getSWMatrix(means,dataset):
-    S_W = np.zeros(S_B.shape)
+    S_W = np.zeros((dataset.shape[1],dataset.shape[1]))
     for i, mean_vec in enumerate(means):
         class_scatter = np.zeros(S_W.shape)
         for row in dataset[np.where(labels == i)]:
@@ -123,14 +124,14 @@ def evaluateClassifier(classifier,data,labels,projectedLabels):
     tn=0
     fn=0
 
-    for row in enumerate(data):
-        currentValue = row[1][0]*row[1][1]
-        if(currentValue>=classifier):
+    for row in range(len(data)):
+        currentValue = data[row]#row[1][0]*row[1][1]
+        if(row>=classifier):
             projectedLabels.append(1) #pos class
         else:
             projectedLabels.append(0)   #neg class
 
-    for i,row in enumerate(data):
+    for i in range(len(data)):
         if(projectedLabels[i]==1 and labels[i]==1):
             tp+=1
 
@@ -149,8 +150,7 @@ def evaluateClassifier(classifier,data,labels,projectedLabels):
 
 
 if __name__ == '__main__':
-    dataset,labels = readTrainingData()
-    dataset = np.delete(dataset, (-1), axis=0)
+    dataset, labels = readTrainingData()
     dataset, labels = get_sample(dataset, labels, 10)
 
     #calculate means for two classes
@@ -161,12 +161,13 @@ if __name__ == '__main__':
     #calculate overall mean
     overall_mean = np.mean(dataset, axis=0)
 
+    # calculate within class covariance matrix
+    S_W = getSWMatrix(means, dataset)
 
     #calculate between class covariance matrix
     S_B = getSBMatrix(means,overall_mean,dataset)
 
-    #calculate within class covariance matrix
-    S_W = getSWMatrix(means,dataset)
+
 
     #calculate projector matrix
     W = getProjector(S_B,S_W)
@@ -179,13 +180,13 @@ if __name__ == '__main__':
             WCounter+=1
     saveImage(imgData, 'out1.jpg')
 
-    imgData = np.empty(shape=(31, 81))
-    WCounter = 0
-    for i in range(31):
-        for j in range(81):
-            imgData[i][j] = W[WCounter][1].real
-            WCounter += 1
-    saveImage(imgData, 'out2.jpg')
+    # imgData = np.empty(shape=(31, 81))
+    # WCounter = 0
+    # for i in range(31):
+    #     for j in range(81):
+    #         imgData[i][j] = W[WCounter][1].real
+    #         WCounter += 1
+    # saveImage(imgData, 'out2.jpg')
 
     #plot W
     plt.plot(W)
@@ -196,29 +197,25 @@ if __name__ == '__main__':
 
     #read new data
     newData, labels = readTrainingData()
-    newData = np.delete(newData, (-1), axis=0)
     newData, labels = get_sample(newData, labels, 10)
     projectedLabels = []
 
     #X_lda = newData.dot(W)
-    X_lda = np.empty(shape=(newData.shape[0],W.shape[1]))
-    for i,row in enumerate(newData):
-        X_lda[i][0] = row.dot(W[:, 0])
-        X_lda[i][1] = row.dot(W[:, 1])
-
+    X_lda = newData.dot(W[:, 0])
     plotData(X_lda, labels)
+    print X_lda
 
     #create k = 1,...,10 different classifier
     classifiers = np.random.uniform(X_lda.min(),X_lda.max(),10)
     bestThreshold = classifiers[0]
     bestPerformance,precision,recall = evaluateClassifier(bestThreshold,X_lda,labels,projectedLabels)
-    precisions = []
-    recalls = []
-    for threshold in classifiers:
+    precisions = np.zeros(classifiers.shape)
+    recalls = np.zeros(classifiers.shape)
+    for i,threshold in enumerate(classifiers):
         print("Threshold = ",threshold)
         performance,precision,recall = evaluateClassifier(threshold,X_lda,labels,projectedLabels)
-        precisions.append(precision)
-        recalls.append(recall)
+        precisions[i] = precision
+        recalls[i] = recall
         print("Performance = ",performance)
         if(performance>bestPerformance):
             bestPerformance = performance
@@ -233,6 +230,8 @@ if __name__ == '__main__':
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.title('Precision-Recall')
+    plt.xlim(precisions.min(),recalls.max())
+    plt.ylim(precisions.min(),recalls.max())
     plt.grid()
     plt.tight_layout()
     plt.show()
