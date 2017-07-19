@@ -18,10 +18,15 @@ import random
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
 TEST_DIR = 'uiuc/test'
-TRAIN_DIR = 'uiuc/train1'
+TRAIN_DIR = 'uiuc/train'
 
-def plotData(X_lda,label):
-    ax = plt.subplot(222)
+
+def plotData(X_lda, label):
+    """
+    Plot result from LDA
+    """
+    
+    ax = plt.figure()
     for lab, marker, color in zip(range(2), ('*', '^'), ('blue', 'red')):
         plt.scatter(x=X_lda[:, 0].real[label == lab],
                     y=X_lda[:, 1].real[label == lab],
@@ -38,7 +43,20 @@ def plotData(X_lda,label):
 
     plt.grid()
     plt.tight_layout()
+    plt.savefig("lda.png", dpi=ax.dpi)
     plt.show()
+
+
+def get_sample(dataset, labels, size):
+    """
+    """
+    neg = dataset[np.where(labels==0)][0:size]
+    pos = dataset[np.where(labels==1)][0:size]
+    ds = np.vstack((pos, neg))
+    labels = np.hstack((np.zeros(size), np.ones(size)))
+
+    return ds, labels
+
 
 def readData(dirName):
     data = np.empty(shape=(IMG_SIZE,))
@@ -54,11 +72,15 @@ def readData(dirName):
     label[np.where(label > 0)] = 1  # pos class
     return data,label
 
+
 def saveImage(imgData,filename):
     misc.imsave(filename,imgData)
 
+
 def readTrainingData():
     return readData(TRAIN_DIR)
+
+
 def readTestData():
     return readData(TEST_DIR)
 
@@ -72,6 +94,7 @@ def getSBMatrix(mean_vec,overall_mean,dataset):
         S_B += n * (mean_vec - overall_mean).dot((mean_vec - overall_mean).T)
     return S_B
 
+
 def getSWMatrix(means,dataset):
     S_W = np.zeros(S_B.shape)
     for i, mean_vec in enumerate(means):
@@ -81,6 +104,7 @@ def getSWMatrix(means,dataset):
             class_scatter += (row - mean_vec).dot((row - mean_vec).T)
         S_W += class_scatter  # sum class scatter matrices
     return S_W
+
 
 def getProjector(S_B,S_W):
     eig_vals, eig_vecs = np.linalg.eig(np.linalg.inv(S_W).dot(S_B))
@@ -124,20 +148,10 @@ def evaluateClassifier(classifier,data,labels,projectedLabels):
     return (tp+tn)/float(tp+tn+fp+fn),precision,recall
 
 
-
-
-
-
-
-
-
-
-
-
-
 if __name__ == '__main__':
     dataset,labels = readTrainingData()
     dataset = np.delete(dataset, (-1), axis=0)
+    dataset, labels = get_sample(dataset, labels, 10)
 
     #calculate means for two classes
     means = []
@@ -181,8 +195,9 @@ if __name__ == '__main__':
 
 
     #read new data
-    newData,labels = readTrainingData()
+    newData, labels = readTrainingData()
     newData = np.delete(newData, (-1), axis=0)
+    newData, labels = get_sample(newData, labels, 10)
     projectedLabels = []
 
     #X_lda = newData.dot(W)
@@ -221,5 +236,4 @@ if __name__ == '__main__':
     plt.grid()
     plt.tight_layout()
     plt.show()
-
-
+    plt.savefig("precision_recall.png", dpi=ax.dpi)
