@@ -8,16 +8,18 @@ from sklearn import preprocessing
 import random
 import timeit
 
+
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
 TEST_DIR = 'uiuc/test'
 TRAIN_DIR = 'uiuc/train'
 
 
-def draw(vector, shape):
+def draw(vector, shape, name):
     plt.figure()
     plt.imshow(np.reshape(vector, shape), 'gray')
     plt.axis('off')
+    plt.savefig(name)
     plt.show()
 
 
@@ -41,8 +43,8 @@ def readData(dirName):
     return data, label
 
 
-def saveImage(imgData, filename):
-    misc.imsave(filename, imgData)
+def saveImage(imgData,filename):
+    misc.imsave(filename,imgData)
 
 
 def readTrainingData():
@@ -63,10 +65,10 @@ def Gram_Schmidt(vecs, row_wise_storage=True, tol=1E-10):
     m, n = A.shape
     V = np.zeros((m, n))
 
-    for j in xrange(n):
+    for j in range(n):
         v0 = A[:, j]
         v = v0.copy()
-        for i in xrange(j):
+        for i in range(j):
             vi = V[:, i]
 
             if (abs(vi) > tol).any():
@@ -178,10 +180,8 @@ if __name__ == '__main__':
     W = np.zeros(shape=(dataset.shape[1], dataset.shape[2]))
     for r in range(p):
         W += np.outer(us[r], vs[r])
-    draw(W, (31, 81))
+    draw(W, (81, 31), "tensor_w.png")
     # misc.imsave('tensorWOut.jpg',W)
-
-
 
     mu = []
     mu.append(np.dot(W.ravel().T, means[0].ravel()))
@@ -233,7 +233,7 @@ if __name__ == '__main__':
     plt.xlim(precisions.min() - 0.5, recalls.max() + 0.5)
     plt.ylim(precisions.min() - 0.5, recalls.max() + 0.5)
     plt.grid()
-    plt.tight_layout()
+    plt.savefig("tensor_precision_recall.png")
     plt.show()
 
     print(W)
@@ -241,6 +241,7 @@ if __name__ == '__main__':
     plt.plot(W)
     plt.grid()
     plt.tight_layout()
+    plt.savefig("tensor_W.png")
     plt.show()
 
     # check on test data

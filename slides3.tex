@@ -37,6 +37,8 @@
 
 % argmax
 \newcommand{\argmax}[1]{\underset{#1}{\operatorname{arg}\,\operatorname{max}}\;}
+% argmin
+\newcommand{\argmin}[1]{\underset{#1}{\operatorname{arg}\,\operatorname{min}}\;}
 
 \title[\insertdate]{Binary Classification Using (tensor) LDA}
 
@@ -48,7 +50,6 @@
 
 \begin{frame}
 \titlepage
-%Mostly based on \textbf{A Tutorial on Bayesian Nonparametric Models} by Samuel J. Gershman.
 \end{frame}
 \note{}
 
@@ -96,6 +97,27 @@
 }
 \end{frame}
 
+\begin{frame}{Determine a projector $w$}
+    \Huge
+    \begin{equation}
+        y(X) = \left\{
+                    \begin{tabular}{cc}
+                        $+1$, & if $w^{T}x \geq \theta$ \\
+                        $-1$, & otherwise
+                    \end{tabular}
+                \right.
+    \end{equation}
+\end{frame}
+
+\begin{frame}{Plot from $S_W$}
+    {\centering
+    \begin{figure}[H]
+        \includegraphics[width=0.75\textwidth]{project_03/s_w.png}
+        \caption{Plot from $S_W$}
+    \end{figure}
+    }
+\end{frame}
+
 \begin{frame}{Plot from $S_B$}
     {\centering
     \begin{figure}[H]
@@ -105,14 +127,14 @@
     }
 \end{frame}
 
-\begin{frame}{Plot from $S_W$}
-    {\centering
-    \begin{figure}[H]
-        \includegraphics[width=0.75\textwidth]{project_03/s_b.png}
-        \caption{Plot from $S_W$}
-    \end{figure}
-    }
-\end{frame}
+%\begin{frame}{Plot from $w$}
+%    {\centering
+%    \begin{figure}[H]
+%        \includegraphics[width=0.75\textwidth]{project_03/ww.png}
+%        \caption{Plot from $w$}
+%    \end{figure}
+%    }
+%\end{frame}
 
 \begin{frame}{Plot from $w$}
     {\centering
@@ -123,14 +145,51 @@
     }
 \end{frame}
 
+\begin{frame}{Plot from $w$}
+    {\centering
+    \begin{figure}[H]
+        \includegraphics[width=0.75\textwidth]{project_03/W.png}
+        \caption{Plot from $w$}
+    \end{figure}
+    }
+\end{frame}
+
+%\begin{frame}{Result}
+%    {\centering
+%    \begin{figure}[H]
+%        \includegraphics[width=0.75\textwidth]{project_03/lda.png}
+%        \caption{Result from LDA}
+%    \end{figure}
+%    }
+%\end{frame}
+
 \begin{frame}{Result}
     {\centering
     \begin{figure}[H]
-        \includegraphics[width=0.75\textwidth]{project_03/lda.png}
+        \includegraphics[width=0.75\textwidth]{project_03/lda_final.png}
         \caption{Result from LDA}
     \end{figure}
     }
 \end{frame}
+
+%\begin{frame}{Result}
+%    {\centering
+%    \begin{figure}[H]
+%        \includegraphics[width=0.75\textwidth]{project_03/lda2.png}
+%        \caption{Result from LDA}
+%    \end{figure}
+%    }
+%\end{frame}
+
+\begin{frame}{Benchmarking}
+    \begin{itemize}
+        \item $S_W$ duration: 140.9035672799946
+        \item $S_B$ duration 0.48717122300877236
+        \item $W$ duration 50.67935458800639
+        \item Prediction duration: 0.0007773570105200633
+    \end{itemize}
+\end{frame}
+\note{}
 
 \begin{frame}{Precision and recall}
 \Huge
@@ -145,7 +204,7 @@
 \begin{frame}{Precision and recall}
     {\centering
     \begin{figure}[H]
-        \includegraphics[width=0.75\textwidth]{project_03/precision_recall.png}
+        \includegraphics[width=0.75\textwidth]{project_03/precision.png}
         \caption{Precision and recall}
     \end{figure}
     }
@@ -155,35 +214,86 @@
 \begin{frame}{Tensor Linear Discriminant Analysis}
     \begin{itemize}
         \item \textbf{Task}: Implement a binary classifier for car detection.
-        \item Using Tensor Linear Discriminant Analysis.
+        \item Using this time Tensor Linear Discriminant Analysis.
     \end{itemize}
 \end{frame}
 \note{}
 
-\begin{frame}{Tensor W output}
+\begin{frame}{Tensor LDA properties}
+    \begin{itemize}
+        \item Treat images as images not as vectors
+        \item Loss information when images are flattened
+        \item Fast learning
+        \item Handles small sample size problem
+    \end{itemize}
+\end{frame}
+\note{}
+
+\begin{frame}{Steps}
+    \begin{itemize}
+        \item Read data
+        \item Initialize vector $u$, and $v$
+        \item Compute contractions $u$, and $v$ for all images until difference is less than $\epsilon$
+            \begin{itemize}
+                \item $v(t) = \argmin{v} ||Xv-y||^2$ 
+                \item $u(t) = \argmin{u} ||Xu-y||^2$ 
+                \item $u$ and $v$ are kept orthogonal using Gram-Schmidt procedure
+            \end{itemize}
+        \item Compute $W$
+            \begin{itemize}
+                \item $W = u_1v^T_1 + ... + u_\rho v_\rho^T$ 
+            \end{itemize}
+        \item Evaluate multiple classifiers on the training data
+        \item Use best classifier fot test data
+    \end{itemize}
+\end{frame}
+\note{}
+
+\begin{frame}{Tensor $w$}
     {\centering
     \begin{figure}[H]
-        \includegraphics[width=0.75\textwidth]{project_03/tensorWOut.jpg}
-        \caption{}
+        %\includegraphics[width=0.50\textwidth]{project_03/WUnique.png}
+        \includegraphics[width=0.50\textwidth]{project_03/tensor_w.png}
+        \caption{Plot from $w$ in Tensor LDA}
     \end{figure}
     }
 \end{frame}
 
-\begin{frame}{Determine a projector $w$}
-    \Huge
-    \begin{equation}
-        y(X) = \left\{
-                    \begin{tabular}{cc}
-                        $+1$, & if $w^{T}x \geq \theta$ \\
-                        $-1$, & otherwise
-                    \end{tabular}
-                \right.
-    \end{equation}
+\begin{frame}{Tensor $w$}
+    {\centering
+    \begin{figure}[H]
+        %\includegraphics[width=0.50\textwidth]{project_03/WUnique.png}
+        \includegraphics[width=0.50\textwidth]{project_03/tensor_W.png}
+        \caption{Plot from $w$ in Tensor LDA}
+    \end{figure}
+    }
 \end{frame}
 
-%\begin{frame}
-%\huge{Thank you}\\
-%\huge{Questions?}\\
-%\end{frame}
+\begin{frame}{Tensor $w$}
+    {\centering
+    \begin{figure}[H]
+        \includegraphics[width=0.50\textwidth]{project_03/WUnique.png}
+        \caption{Plot for $w$ in Tensor LDA}
+    \end{figure}
+    }
+\end{frame}
+
+\begin{frame}{Precision and recall}
+    {\centering
+    \begin{figure}[H]
+        \includegraphics[width=0.75\textwidth]{project_03/tensor_precision_recall.png}
+        \caption{Precision and recall}
+    \end{figure}
+    }
+\end{frame}
+
+\begin{frame}{Benchmarking}
+    \begin{itemize}
+        \item Compute contraction duration: 26.600847046996932
+        \item Evaluation duration: 4.858664466999471
+        \item Prediction duration: 0.0010174380004173145
+    \end{itemize}
+\end{frame}
+\note{}
 
 \end{document}
