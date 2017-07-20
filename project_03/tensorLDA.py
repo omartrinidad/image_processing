@@ -11,12 +11,14 @@ import random
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
 TEST_DIR = 'uiuc/test'
-TRAIN_DIR = 'uiuc/train1'
+TRAIN_DIR = 'uiuc/train'
 
-def draw(vector, shape):
+
+def draw(vector, shape, name):
     plt.figure()
     plt.imshow(np.reshape(vector, shape), 'gray')
     plt.axis('off')
+    plt.savefig(name)
     plt.show()
 
 
@@ -38,11 +40,15 @@ def readData(dirName):
     label[np.where(label == -1)] =  negClass
     return data,label
 
+
 def saveImage(imgData,filename):
     misc.imsave(filename,imgData)
 
+
 def readTrainingData():
     return readData(TRAIN_DIR)
+
+
 def readTestData():
     return readData(TEST_DIR)
 
@@ -184,7 +190,7 @@ if __name__ == '__main__':
     mu = []
     mu.append(np.dot(W.ravel().T, means[0].ravel()))
     mu.append(np.dot(W.ravel().T, means[1].ravel()))
-    print mu
+    print(mu)
 
     # create k = 1,...,10 different classifier
     cl_total = 10000
@@ -212,11 +218,11 @@ if __name__ == '__main__':
     print('Best Threshold = ', bestThreshold)
     print("Best Performance = ", bestPerformance)
     print("Projected labels: ")
-    print projectedLabels
-    print "Recalls:"
-    print recalls
-    print "Precisions: "
-    print precisions
+    print(projectedLabels)
+    print("Recalls:")
+    print(recalls)
+    print("Precisions: ")
+    print(precisions)
 
     plt.clf()
     plt.plot(recalls, precisions, lw=2, color='navy',
@@ -227,15 +233,16 @@ if __name__ == '__main__':
     plt.xlim(precisions.min() - 0.5, recalls.max() + 0.5)
     plt.ylim(precisions.min() - 0.5, recalls.max() + 0.5)
     plt.grid()
-    plt.tight_layout()
+    plt.ti1ght_layout()
+    plt.savefig("tensor_precision_recall.png")
     plt.show()
 
 
-
-    print W
+    print(W)
     # plot W
     plt.plot(W)
     plt.grid()
     plt.tight_layout()
+    plt.savefig("tensor_W.png")
     plt.show()
 
