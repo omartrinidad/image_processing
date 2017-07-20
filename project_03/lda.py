@@ -31,7 +31,6 @@ def draw(vector, shape, name):
 
 def plotData(X_lda,label):
     plt.clf()
-    ax = plt.subplot(222)
     for lab, marker, color in zip(range(2), ('*', '^'), ('blue', 'red')):
         plt.scatter(x=X_lda[label == lab],
                     y=X_lda[label == lab],
@@ -174,7 +173,6 @@ if __name__ == '__main__':
     S_B = getSBMatrix(means,overall_mean,dataset)
     draw(S_B,S_B.shape, "s_b.png")
 
-
     #calculate projector matrix
     W = getProjector(S_B,S_W)
     draw(W,(81,31), "ww.png")
@@ -207,22 +205,22 @@ if __name__ == '__main__':
     precisions = np.zeros((len(classifiers),))
     recalls = np.zeros((len(classifiers)))
     for i,threshold in enumerate(classifiers):
-        print("Threshold = ",threshold)
+        #print("Threshold = ",threshold)
         performance,precision,recall,projectedLabels = evaluateClassifier(threshold,newData,W,labels)
         precisions[i] = precision
         recalls[i] = recall
-        print("Performance = ",performance)
-        print("Precision = ", precision)
-        print("Recall = ", recall)
+        #print("Performance = ",performance)
+        #print("Precision = ", precision)
+        #print("Recall = ", recall)
 
         if(performance>bestPerformance):
             bestPerformance = performance
             bestThreshold = threshold
 
-    print('Best Threshold = ',bestThreshold)
-    print("Best Performance = ",bestPerformance)
-    print("Projected labels: ")
-    print(projectedLabels)
+    #print('Best Threshold = ',bestThreshold)
+    #print("Best Performance = ",bestPerformance)
+    #print("Projected labels: ")
+    #print(projectedLabels)
 
     #plot output
     plotData(X_lda, labels)
