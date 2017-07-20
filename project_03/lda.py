@@ -17,8 +17,8 @@ import random
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
-TEST_DIR = 'uiuc/test'
-TRAIN_DIR = 'uiuc/train'
+TEST_DIR = 'uiuc/test1'
+TRAIN_DIR = 'uiuc/train1'
 
 
 
@@ -185,8 +185,10 @@ if __name__ == '__main__':
         X_lda[i] = row.dot(W)
     print X_lda
     #plot output
-    plotData(X_lda, labels)
-
+    #plotData(X_lda, labels)
+    plt.plot(X_lda,'ro')
+    plt.grid()
+    plt.show()
 
     mu =[]
     mu.append(np.dot(W.T, means[0]))
@@ -227,12 +229,6 @@ if __name__ == '__main__':
     print precisions
 
 
-
-    # plot W
-    plt.plot(W)
-    plt.grid()
-    plt.show()
-
     plt.clf()
     plt.plot(recalls, precisions, lw=2, color='navy',
          label='Precision-Recall curve')
@@ -256,4 +252,3 @@ if __name__ == '__main__':
         projectedLabels.append(prediction)
 
     print projectedLabels
-
