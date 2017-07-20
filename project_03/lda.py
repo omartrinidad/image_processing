@@ -17,16 +17,15 @@ import random
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
-TEST_DIR = 'uiuc/test'
-TRAIN_DIR = 'uiuc/train'
+TEST_DIR = 'uiuc/test1'
+TRAIN_DIR = 'uiuc/train1'
 
 
 
-def draw(vector, shape, name):
+def draw(vector, shape):
     plt.figure()
     plt.imshow(np.reshape(vector, shape), 'gray')
     plt.axis('off')
-    plt.savefig(name)
     plt.show()
 
 def plotData(X_lda,label):
@@ -48,7 +47,6 @@ def plotData(X_lda,label):
     plt.ylim(X_lda[0].min() - 0.01, X_lda[0].max() + 0.01)
     plt.grid()
     #plt.tight_layout()
-    plt.savefig("lda.png")
     plt.show()
 
 def readData(dirName):
@@ -56,6 +54,8 @@ def readData(dirName):
         data = np.zeros(shape=(len(files),IMG_SIZE))
         counter =0
         for filename in files:
+            if(filename.find("DS_Store")==1):
+                continue
             path = os.path.join(root, filename)
             image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31)).ravel()
             data[counter] = image
@@ -167,31 +167,35 @@ if __name__ == '__main__':
 
     # calculate within class covariance matrix
     S_W = getSWMatrix(means, dataset)
-    draw(S_W,S_W.shape, "s_w.png")
+    draw(S_W,S_W.shape)
 
     #calculate between class covariance matrix
     S_B = getSBMatrix(means,overall_mean,dataset)
-    draw(S_B,S_B.shape, "s_b.png")
+    draw(S_B,S_B.shape)
 
     #calculate projector matrix
     W = getProjector(S_B,S_W)
-    draw(W,(81,31), "ww.png")
+    draw(W,(81,31))
+
+    #X_lda = newData.dot(W)
+    X_lda = np.empty(shape=(dataset.shape[0],))
+    for i,row in enumerate(dataset):
+        X_lda[i] = row.dot(W)
+    print X_lda
+    #plot output
+    plotData(X_lda, labels)
 
 
     #read new data
-    newData,labels = readTrainingData()
+    newData,labels = readTestData()
     projectedLabels = []
 
-    #X_lda = newData.dot(W)
-    X_lda = np.empty(shape=(newData.shape[0],))
-    for i,row in enumerate(newData):
-        X_lda[i] = row.dot(W)
-    print(X_lda)
+
 
     mu =[]
     mu.append(np.dot(W.T, means[0]))
     mu.append(np.dot(W.T, means[1]))
-    print(mu)
+    print mu
 
     #create k = 1,...,10 different classifier
     cl_total = 10000
@@ -217,18 +221,18 @@ if __name__ == '__main__':
             bestPerformance = performance
             bestThreshold = threshold
 
-    #print('Best Threshold = ',bestThreshold)
-    #print("Best Performance = ",bestPerformance)
-    #print("Projected labels: ")
-    #print(projectedLabels)
-
-    #plot output
-    plotData(X_lda, labels)
+    print('Best Threshold = ',bestThreshold)
+    print("Best Performance = ",bestPerformance)
+    print("Projected labels: ")
+    print projectedLabels
+    print "Recalls:"
+    print recalls
+    print "Precisions: "
+    print precisions
 
     # plot W
     plt.plot(W)
     plt.grid()
-    plt.savefig("w.png")
     plt.show()
 
     plt.clf()
@@ -240,7 +244,6 @@ if __name__ == '__main__':
     plt.xlim(precisions.min()-0.5,recalls.max()+0.5)
     plt.ylim(precisions.min()-0.5,recalls.max()+0.5)
     plt.grid()
-    plt.savefig("precision_recall.png")
-    plt.show()#
+    plt.show()
 
 

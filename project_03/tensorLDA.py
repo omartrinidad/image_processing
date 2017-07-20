@@ -13,17 +13,24 @@ label_dict = {0: 'Background', 1: 'Car'}
 TEST_DIR = 'uiuc/test'
 TRAIN_DIR = 'uiuc/train1'
 
+def draw(vector, shape):
+    plt.figure()
+    plt.imshow(np.reshape(vector, shape), 'gray')
+    plt.axis('off')
+    plt.show()
+
+
 def readData(dirName):
     for root, _, files in os.walk(dirName):
         data = np.zeros(shape=(len(files),81, 31))
         counter = 0
         for filename in files:
+            if (filename.find("DS_Store") == 1):
+                continue
             path = os.path.join(root, filename)
             image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31))
-            image = preprocessing.normalize(image)
-            data[counter] = image
+            data[counter] = preprocessing.normalize(image)
             counter+=1
-
     label = np.char.array(files).rfind('Pos').astype(np.float32)
     posClass = abs(1/float(len(files)))
     negClass = abs(1/float(len(files)))*-1
@@ -64,41 +71,42 @@ def Gram_Schmidt(vecs, row_wise_storage=True, tol=1E-10):
 
 
 
-def evaluateClassifier(classifier,newData,W,labels,projectedLabels):
+def evaluateClassifier(classifier,data,W,labels):
     tp=0
     fp=0
     tn=0
     fn=0
+    projectedLabels = []
 
-    for i in range(newData.shape[0]):
-        img = newData[i]
-        pp = img*W
-        px = (np.mean(pp) - np.var(pp))*1000.0
-        print px
-        if(px<classifier):
-            projectedLabels[i] = abs(1/float(len(labels)))*-1
+    for item in data[labels==labels.max()]: #check for pos
+        if np.dot(W.ravel().T,item.ravel()) >= classifier:
+            prediction = 1
         else:
-            projectedLabels[i] = abs(1/float(len(labels)))
+            prediction = 0
 
-    print projectedLabels
-
-    for i in range(len(labels)):
-        if(projectedLabels[i]==1 and labels[i]==1):
-            tp+=1
-
-        if(projectedLabels[i]==1 and labels[i]==0):
+        if(prediction!=1):
             fp+=1
+        else:
+            tp+=1
+        projectedLabels.append(prediction)
 
-        if(projectedLabels[i]==0 and labels[i]==0):
-            tn+=1
-        if(projectedLabels[i]==0 and labels[i]==1):
-            fn+=1
+    for item in data[labels==labels.min()]: #check for neg
+        if np.dot(W.ravel().T,item.ravel()) >= classifier:
+            prediction = 1
+        else:
+            prediction = 0
+
+        if (prediction != 0):
+            fn += 1
+        else:
+            tn += 1
+        projectedLabels.append(prediction)
 
     precision = tp/float(tp+fp) if (tp+fp)>0 else 0
     recall = tp/float(tp+fn) if (tp+fn)>0 else 0
 
-    divisor = float(tp+tn+fp+fn) if float(tp+tn+fp+fn)>0 else 1
-    return (tp+tn)/divisor,precision,recall
+    return (tp+tn)/float(tp+tn+fp+fn),precision,recall,projectedLabels
+
 
 
 
@@ -108,15 +116,23 @@ def evaluateClassifier(classifier,newData,W,labels,projectedLabels):
 if __name__ == '__main__':
     dataset, labels = readTrainingData()
 
+    # calculate means for two classes
+    means = []
+    means.append(np.mean(dataset[labels==labels.min()],axis=0));
+    means.append(np.mean(dataset[labels==labels.max()],axis=0));
 
-    us = np.zeros(shape=(dataset.shape[0], dataset.shape[1]))
-    vs = np.zeros(shape=(dataset.shape[0], dataset.shape[2]))
-    for r in range(dataset.shape[0]):
+    # calculate overall mean
+    overall_mean = np.mean(dataset, axis=0)
+
+    p = 100
+    us = np.zeros(shape=(p, dataset.shape[1]))
+    vs = np.zeros(shape=(p, dataset.shape[2]))
+    for r in range(p):
 
         u = np.random.rand(dataset.shape[1])
         v = np.random.rand(dataset.shape[2])
         t = 1
-        tmax = 79
+        tmax = 80
         epsilon = 0.001
 
         while True:
@@ -158,38 +174,58 @@ if __name__ == '__main__':
     W = np.empty(shape=(dataset.shape[1], dataset.shape[2]))
     for r in range(dataset.shape[0]):
         W += np.outer(us[r],vs[r])
-
-    misc.imsave('tensorWOut.jpg',W)
+    draw(W,(81,31))
+    #misc.imsave('tensorWOut.jpg',W)
 
     # read new data
     newData, labels = readTrainingData()
     projectedLabels = np.zeros(newData.shape[0])
 
+    mu = []
+    mu.append(np.dot(W.ravel().T, means[0].ravel()))
+    mu.append(np.dot(W.ravel().T, means[1].ravel()))
+    print mu
 
     # create k = 1,...,10 different classifier
-    classifiers = np.random.uniform(-10,10,10)
+    cl_total = 10000
+    classifiers = []
+    for index in range(cl_total):
+        theta = mu[0] + abs(float(mu[1] - mu[0])) / (cl_total + 1) * (index + 1)
+        classifiers.append(theta)
     bestThreshold = classifiers[0]
-    bestPerformance, precision, recall = evaluateClassifier(bestThreshold,newData,W, labels, projectedLabels)
-    precisions = []
-    recalls = []
-    for threshold in classifiers:
+
+    bestPerformance, precision, recall,projectedLabels = evaluateClassifier(bestThreshold,newData,W, labels)
+    precisions = np.zeros((len(classifiers),))
+    recalls = np.zeros((len(classifiers)))
+    for i,threshold in enumerate(classifiers):
         print("Threshold = ",threshold)
-        performance,precision,recall = evaluateClassifier(threshold,newData,W,labels,projectedLabels)
-        precisions.append(precision)
-        recalls.append(recall)
-        print("Performance = ",performance)
+        performance,precision,recall,projectedLabels = evaluateClassifier(threshold,newData,W,labels)
+        precisions[i] = precision
+        recalls[i] = recall
+        print("Performance = ", performance)
+        print("Precision = ", precision)
+        print("Recall = ", recall)
         if(performance>bestPerformance):
             bestPerformance = performance
             bestThreshold = threshold
 
-    print('Best Threshold = ',bestThreshold)
-    print("Best Performance = ",bestPerformance)
+    print('Best Threshold = ', bestThreshold)
+    print("Best Performance = ", bestPerformance)
+    print("Projected labels: ")
+    print projectedLabels
+    print "Recalls:"
+    print recalls
+    print "Precisions: "
+    print precisions
+
     plt.clf()
     plt.plot(recalls, precisions, lw=2, color='navy',
              label='Precision-Recall curve')
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.title('Precision-Recall')
+    plt.xlim(precisions.min() - 0.5, recalls.max() + 0.5)
+    plt.ylim(precisions.min() - 0.5, recalls.max() + 0.5)
     plt.grid()
     plt.tight_layout()
     plt.show()
