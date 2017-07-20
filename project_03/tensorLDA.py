@@ -10,8 +10,8 @@ import random
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
-TEST_DIR = 'uiuc/test1'
-TRAIN_DIR = 'uiuc/train1'
+TEST_DIR = 'uiuc/test'
+TRAIN_DIR = 'uiuc/train'
 
 def draw(vector, shape):
     plt.figure()
@@ -28,7 +28,8 @@ def readData(dirName):
             if (filename.find("DS_Store") == 1):
                 continue
             path = os.path.join(root, filename)
-            image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31))
+            image = misc.imread(path, flatten=True)
+            image = misc.imresize(image,size=(81,31)).astype("float64")
             data[counter] = preprocessing.normalize(image)
             counter+=1
     label = np.char.array(files).rfind('Pos').astype(np.float32)
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     # calculate overall mean
     overall_mean = np.mean(dataset, axis=0)
 
-    p = 100
+    p = 9
     us = np.zeros(shape=(p, dataset.shape[1]))
     vs = np.zeros(shape=(p, dataset.shape[2]))
     for r in range(p):
@@ -148,7 +149,7 @@ if __name__ == '__main__':
             t_st_v = np.vstack((v, v_temp))
             v_gs = Gram_Schmidt(t_st_v)
             v_temp = v_gs[-1]
-            v = preprocessing.normalize(v_temp)[0]
+            v = preprocessing.normalize(v_temp.reshape(1,-1))[0]
 
             # compute v contraction
             contractionV = np.empty((dataset.shape[0], 81))
@@ -161,7 +162,7 @@ if __name__ == '__main__':
             t_st_u = np.vstack((u, u_temp))
             u_gs = Gram_Schmidt(t_st_u)
             u_temp = u_gs[-1]
-            u = preprocessing.normalize(u_temp)[0]
+            u = preprocessing.normalize(u_temp.reshape(1,-1))[0]
 
             t = t + 1
             check = abs(u[t] - u[t - 1])
@@ -171,8 +172,8 @@ if __name__ == '__main__':
         us[r] = u
         vs[r] = v
 
-    W = np.empty(shape=(dataset.shape[1], dataset.shape[2]))
-    for r in range(dataset.shape[0]):
+    W = np.zeros(shape=(dataset.shape[1], dataset.shape[2]))
+    for r in range(p):
         W += np.outer(us[r],vs[r])
     draw(W,(81,31))
     #misc.imsave('tensorWOut.jpg',W)
@@ -185,7 +186,7 @@ if __name__ == '__main__':
     print mu
 
     # create k = 1,...,10 different classifier
-    cl_total = 10000
+    cl_total = 100
     classifiers = []
     for index in range(cl_total):
         theta = mu[0] + abs(float(mu[1] - mu[0])) / (cl_total + 1) * (index + 1)
@@ -239,6 +240,7 @@ if __name__ == '__main__':
 
     # check on test data
     newData, labels = readTestData()
+    labels = np.ones((newData.shape[0],))
     projectedLabels = []
     for item in newData:  # check for pos
         if np.dot(W.ravel().T,item.ravel()) >= bestThreshold:
@@ -246,5 +248,6 @@ if __name__ == '__main__':
         else:
             prediction = 0
         projectedLabels.append(prediction)
-
+    errors = np.sum(projectedLabels != labels)
+    print errors
     print projectedLabels

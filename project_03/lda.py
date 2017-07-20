@@ -239,6 +239,12 @@ if __name__ == '__main__':
     print "Precisions: "
     print precisions
 
+    # plot W
+    plt.plot(W)
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
 
     plt.clf()
     plt.plot(recalls, precisions, lw=2, color='navy',
