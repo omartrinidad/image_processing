@@ -17,8 +17,8 @@ import random
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
-TEST_DIR = 'uiuc/test1'
-TRAIN_DIR = 'uiuc/train1'
+TEST_DIR = 'uiuc/test'
+TRAIN_DIR = 'uiuc/train'
 
 
 
@@ -60,7 +60,7 @@ def readData(dirName):
             image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31)).ravel()
             data[counter] = image
             counter+=1
-    data = preprocessing.normalize(data)
+    #data = preprocessing.normalize(data)
     label = np.char.array(files).rfind('Pos')
     label[np.where(label == -1)] = 0  # neg class
     label[np.where(label > 0)] = 1  # pos class
@@ -186,31 +186,25 @@ if __name__ == '__main__':
     plotData(X_lda, labels)
 
 
-    #read new data
-    newData,labels = readTestData()
-    projectedLabels = []
-
-
-
     mu =[]
     mu.append(np.dot(W.T, means[0]))
     mu.append(np.dot(W.T, means[1]))
     print mu
 
     #create k = 1,...,10 different classifier
-    cl_total = 10000
+    cl_total = 100
     classifiers = []
     for index in range(cl_total):
         theta = mu[0] + abs(float(mu[1] - mu[0])) / (cl_total + 1) * (index + 1)
         classifiers.append(theta)
 
     bestThreshold = classifiers[0]
-    bestPerformance,precision,recall,projectedLabels = evaluateClassifier(bestThreshold,newData,W,labels)
+    bestPerformance,precision,recall,projectedLabels = evaluateClassifier(bestThreshold,dataset,W,labels)
     precisions = np.zeros((len(classifiers),))
     recalls = np.zeros((len(classifiers)))
     for i,threshold in enumerate(classifiers):
-        #print("Threshold = ",threshold)
-        performance,precision,recall,projectedLabels = evaluateClassifier(threshold,newData,W,labels)
+        print("Threshold = ",threshold)
+        performance,precision,recall,projectedLabels = evaluateClassifier(threshold,dataset,W,labels)
         precisions[i] = precision
         recalls[i] = recall
         #print("Performance = ",performance)
@@ -224,11 +218,11 @@ if __name__ == '__main__':
     print('Best Threshold = ',bestThreshold)
     print("Best Performance = ",bestPerformance)
     print("Projected labels: ")
-    print projectedLabels
-    print "Recalls:"
-    print recalls
-    print "Precisions: "
-    print precisions
+    print(projectedLabels)
+    print("Recalls:")
+    print(recalls)
+    print("Precisions: ")
+    print(precisions)
 
     # plot W
     plt.plot(W)
@@ -246,4 +240,16 @@ if __name__ == '__main__':
     plt.grid()
     plt.show()
 
+
+    #check on test data
+    newData,labels = readTestData()
+    projectedLabels = []
+    for item in newData: #check for pos
+        if np.dot(W, item) >= bestThreshold:
+            prediction = 1
+        else:
+            prediction = 0
+        projectedLabels.append(prediction)
+
+    print(projectedLabels)
 
