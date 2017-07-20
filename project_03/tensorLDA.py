@@ -10,7 +10,7 @@ import random
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
-TEST_DIR = 'uiuc/test'
+TEST_DIR = 'uiuc/test1'
 TRAIN_DIR = 'uiuc/train1'
 
 def draw(vector, shape):
@@ -177,9 +177,7 @@ if __name__ == '__main__':
     draw(W,(81,31))
     #misc.imsave('tensorWOut.jpg',W)
 
-    # read new data
-    newData, labels = readTrainingData()
-    projectedLabels = np.zeros(newData.shape[0])
+
 
     mu = []
     mu.append(np.dot(W.ravel().T, means[0].ravel()))
@@ -194,12 +192,12 @@ if __name__ == '__main__':
         classifiers.append(theta)
     bestThreshold = classifiers[0]
 
-    bestPerformance, precision, recall,projectedLabels = evaluateClassifier(bestThreshold,newData,W, labels)
+    bestPerformance, precision, recall,projectedLabels = evaluateClassifier(bestThreshold,dataset,W, labels)
     precisions = np.zeros((len(classifiers),))
     recalls = np.zeros((len(classifiers)))
     for i,threshold in enumerate(classifiers):
         print("Threshold = ",threshold)
-        performance,precision,recall,projectedLabels = evaluateClassifier(threshold,newData,W,labels)
+        performance,precision,recall,projectedLabels = evaluateClassifier(threshold,dataset,W,labels)
         precisions[i] = precision
         recalls[i] = recall
         print("Performance = ", performance)
@@ -239,3 +237,14 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.show()
 
+    # check on test data
+    newData, labels = readTestData()
+    projectedLabels = []
+    for item in newData:  # check for pos
+        if np.dot(W.ravel().T,item.ravel()) >= bestThreshold:
+            prediction = 1
+        else:
+            prediction = 0
+        projectedLabels.append(prediction)
+
+    print projectedLabels
