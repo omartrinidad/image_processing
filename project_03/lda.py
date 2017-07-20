@@ -174,22 +174,22 @@ if __name__ == '__main__':
     start = timeit.default_timer()
     # calculate within class covariance matrix
     S_W = getSWMatrix(means, dataset)
-    draw(S_W, S_W.shape, "s_w.png")
     stop = timeit.default_timer()
+    draw(S_W, S_W.shape, "s_w.png")
     S_WDuration = stop-start
 
     start = timeit.default_timer()
     #calculate between class covariance matrix
     S_B = getSBMatrix(means,overall_mean,dataset)
-    draw(S_B,S_B.shape, "s_b.png")
     stop = timeit.default_timer()
+    draw(S_B,S_B.shape, "s_b.png")
     S_BDuration = stop-start
 
     start = timeit.default_timer()
     #calculate projector matrix
     W = getProjector(S_B,S_W)
-    draw(W, (81,31), "ww.png")
     stop = timeit.default_timer()
+    draw(W, (81,31), "ww.png")
     WDuration = stop-start
 
 

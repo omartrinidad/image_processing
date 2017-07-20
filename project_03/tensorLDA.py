@@ -250,7 +250,7 @@ if __name__ == '__main__':
     projectedLabels = []
     start = timeit.default_timer()
     for item in newData:  # check for pos
-        if np.dot(W.ravel().T, item.ravel()) >= bestThreshold:
+        if np.tensordot(item,W) >= bestThreshold:
             prediction = 1
         else:
             prediction = 0
