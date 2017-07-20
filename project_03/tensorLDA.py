@@ -132,7 +132,7 @@ if __name__ == '__main__':
         u = np.random.rand(dataset.shape[1])
         v = np.random.rand(dataset.shape[2])
         t = 1
-        tmax = 80
+        tmax = 79
         epsilon = 0.001
 
         while True:
