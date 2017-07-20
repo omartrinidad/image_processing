@@ -133,12 +133,13 @@ if __name__ == '__main__':
     p = 100
     us = np.zeros(shape=(p, dataset.shape[1]))
     vs = np.zeros(shape=(p, dataset.shape[2]))
+    
     for r in range(p):
 
         u = np.random.rand(dataset.shape[1])
         v = np.random.rand(dataset.shape[2])
         t = 1
-        tmax = 80
+        tmax = 79
         epsilon = 0.001
 
         while True:
@@ -180,7 +181,8 @@ if __name__ == '__main__':
     W = np.empty(shape=(dataset.shape[1], dataset.shape[2]))
     for r in range(dataset.shape[0]):
         W += np.outer(us[r],vs[r])
-    draw(W,(81,31))
+
+    draw(W, (81, 31))
     #misc.imsave('tensorWOut.jpg',W)
 
     mu = []

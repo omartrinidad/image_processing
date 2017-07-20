@@ -24,10 +24,11 @@ TRAIN_DIR = 'uiuc/train1'
 
 
 
-def draw(vector, shape):
+def draw(vector, shape, name):
     plt.figure()
     plt.imshow(np.reshape(vector, shape), 'gray')
     plt.axis('off')
+    plt.savefig(name)
     plt.show()
 
 
@@ -50,6 +51,7 @@ def plotData(X_lda,label):
     plt.ylim(X_lda[0].min() - 0.01, X_lda[0].max() + 0.01)
     plt.grid()
     #plt.tight_layout()
+    plt.savefig("lda.png")
     plt.show()
 
 def readData(dirName):
@@ -63,7 +65,7 @@ def readData(dirName):
             image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31)).ravel()
             data[counter] = image
             counter+=1
-    #data = preprocessing.normalize(data)
+    data = preprocessing.normalize(data)
     label = np.char.array(files).rfind('Pos')
     label[np.where(label == -1)] = 0  # neg class
     label[np.where(label > 0)] = 1  # pos class
@@ -74,6 +76,7 @@ def saveImage(imgData,filename):
 
 def readTrainingData():
     return readData(TRAIN_DIR)
+
 def readTestData():
     return readData(TEST_DIR)
 
@@ -182,10 +185,7 @@ if __name__ == '__main__':
     stop = timeit.default_timer()
     S_BDuration = stop-start
 
-<<<<<<< HEAD
-=======
     start = timeit.default_timer()
->>>>>>> 34f3ce939cae19c0b30f48dabaf5945cd2a4b8fa
     #calculate projector matrix
     W = getProjector(S_B,S_W)
     draw(W,(81,31))
@@ -197,17 +197,17 @@ if __name__ == '__main__':
     X_lda = np.empty(shape=(dataset.shape[0],))
     for i,row in enumerate(dataset):
         X_lda[i] = row.dot(W)
-    print X_lda
+    print(X_lda)
     #plot output
     #plotData(X_lda, labels)
-    plt.plot(X_lda,'ro')
+    plt.plot(X_lda, 'ro')
     plt.grid()
     plt.show()
 
     mu =[]
     mu.append(np.dot(W.T, means[0]))
     mu.append(np.dot(W.T, means[1]))
-    print mu
+    print(mu)
 
     #create k = 1,...,10 different classifier
     cl_total = 100
@@ -252,9 +252,8 @@ if __name__ == '__main__':
     plt.xlim(precisions.min()-0.5,recalls.max()+0.5)
     plt.ylim(precisions.min()-0.5,recalls.max()+0.5)
     plt.grid()
+    plt.savefig("precision_recall.png")
     plt.show()
-
-
 
     #check on test data
     newData,labels = readTestData()
@@ -266,12 +265,6 @@ if __name__ == '__main__':
         else:
             prediction = 0
         projectedLabels.append(prediction)
-<<<<<<< HEAD
-
-    print(projectedLabels)
-=======
     stop = timeit.default_timer()
     predictionDuration = stop-start
-    
-    print projectedLabels
->>>>>>> 34f3ce939cae19c0b30f48dabaf5945cd2a4b8fa
+    print(projectedLabels)
