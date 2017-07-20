@@ -276,3 +276,7 @@ if __name__ == '__main__':
     stop = timeit.default_timer()
     predictionDuration = stop-start
     print(projectedLabels)
+    print("Prediction duration", predictionDuration)
+    print("S_W duration", S_WDuration)
+    print("S_B duration", S_BDuration)
+    print("W duration", WDuration)
