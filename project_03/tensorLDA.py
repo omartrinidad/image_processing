@@ -178,7 +178,7 @@ if __name__ == '__main__':
     W = np.zeros(shape=(dataset.shape[1], dataset.shape[2]))
     for r in range(p):
         W += np.outer(us[r], vs[r])
-    draw(W, (81, 31))
+    draw(W, (31, 81))
     # misc.imsave('tensorWOut.jpg',W)
 
 
@@ -249,7 +249,7 @@ if __name__ == '__main__':
     projectedLabels = []
     start = timeit.default_timer()
     for item in newData:  # check for pos
-        if np.dot(W.ravel().T, item.ravel()) >= bestThreshold:
+        if np.tensordot(item,W) >= bestThreshold:
             prediction = 1
         else:
             prediction = 0
