@@ -124,14 +124,15 @@ if __name__ == '__main__':
     # calculate overall mean
     overall_mean = np.mean(dataset, axis=0)
 
-    us = np.zeros(shape=(dataset.shape[0], dataset.shape[1]))
-    vs = np.zeros(shape=(dataset.shape[0], dataset.shape[2]))
-    for r in range(dataset.shape[0]):
+    p = 100
+    us = np.zeros(shape=(p, dataset.shape[1]))
+    vs = np.zeros(shape=(p, dataset.shape[2]))
+    for r in range(p):
 
         u = np.random.rand(dataset.shape[1])
         v = np.random.rand(dataset.shape[2])
         t = 1
-        tmax = 79
+        tmax = 80
         epsilon = 0.001
 
         while True:
