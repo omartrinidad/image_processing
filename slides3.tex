@@ -48,7 +48,6 @@
 
 \begin{frame}
 \titlepage
-%Mostly based on \textbf{A Tutorial on Bayesian Nonparametric Models} by Samuel J. Gershman.
 \end{frame}
 \note{}
 
@@ -94,6 +93,18 @@
     {\textcolor{blue}{w^TS_ww}}
 \end{equation}
 }
+\end{frame}
+
+\begin{frame}{Determine a projector $w$}
+    \Huge
+    \begin{equation}
+        y(X) = \left\{
+                    \begin{tabular}{cc}
+                        $+1$, & if $w^{T}x \geq \theta$ \\
+                        $-1$, & otherwise
+                    \end{tabular}
+                \right.
+    \end{equation}
 \end{frame}
 
 \begin{frame}{Plot from $S_W$}
@@ -145,7 +156,7 @@
 \begin{frame}{Precision and recall}
     {\centering
     \begin{figure}[H]
-        \includegraphics[width=0.75\textwidth]{project_03/precision_recall.png}
+        \includegraphics[width=0.75\textwidth]{project_03/precision.png}
         \caption{Precision and recall}
     \end{figure}
     }
@@ -160,26 +171,15 @@
 \end{frame}
 \note{}
 
-\begin{frame}{Tensor W output}
+\begin{frame}{Tensor $w$}
     {\centering
     \begin{figure}[H]
-        \includegraphics[width=0.75\textwidth]{project_03/tensorWOut.jpg}
-        \caption{}
+        \includegraphics[width=0.50\textwidth]{project_03/WUnique.png}
+        \caption{Plot from $w$ in Tensor LDA}
     \end{figure}
     }
 \end{frame}
 
-\begin{frame}{Determine a projector $w$}
-    \Huge
-    \begin{equation}
-        y(X) = \left\{
-                    \begin{tabular}{cc}
-                        $+1$, & if $w^{T}x \geq \theta$ \\
-                        $-1$, & otherwise
-                    \end{tabular}
-                \right.
-    \end{equation}
-\end{frame}
 
 %\begin{frame}
 %\huge{Thank you}\\

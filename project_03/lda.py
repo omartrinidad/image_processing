@@ -14,6 +14,8 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 import random
+import timeit
+
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
@@ -166,17 +168,30 @@ if __name__ == '__main__':
     #calculate overall mean
     overall_mean = np.mean(dataset, axis=0)
 
+    start = timeit.default_timer()
     # calculate within class covariance matrix
     S_W = getSWMatrix(means, dataset)
     draw(S_W,S_W.shape)
+    stop = timeit.default_timer()
+    S_WDuration = stop-start
 
+    start = timeit.default_timer()
     #calculate between class covariance matrix
     S_B = getSBMatrix(means,overall_mean,dataset)
     draw(S_B,S_B.shape)
+    stop = timeit.default_timer()
+    S_BDuration = stop-start
 
+<<<<<<< HEAD
+=======
+    start = timeit.default_timer()
+>>>>>>> 34f3ce939cae19c0b30f48dabaf5945cd2a4b8fa
     #calculate projector matrix
     W = getProjector(S_B,S_W)
     draw(W,(81,31))
+    stop = timeit.default_timer()
+    WDuration = stop-start
+
 
     #X_lda = newData.dot(W)
     X_lda = np.empty(shape=(dataset.shape[0],))
@@ -240,14 +255,23 @@ if __name__ == '__main__':
     plt.show()
 
 
+
     #check on test data
     newData,labels = readTestData()
     projectedLabels = []
+    start = timeit.default_timer()
     for item in newData: #check for pos
         if np.dot(W, item) >= bestThreshold:
             prediction = 1
         else:
             prediction = 0
         projectedLabels.append(prediction)
+<<<<<<< HEAD
 
     print(projectedLabels)
+=======
+    stop = timeit.default_timer()
+    predictionDuration = stop-start
+    
+    print projectedLabels
+>>>>>>> 34f3ce939cae19c0b30f48dabaf5945cd2a4b8fa
