@@ -17,8 +17,8 @@ import random
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
-TEST_DIR = 'uiuc/test'
-TRAIN_DIR = 'uiuc/train'
+TEST_DIR = 'uiuc/test1'
+TRAIN_DIR = 'uiuc/train1'
 
 
 
@@ -27,6 +27,7 @@ def draw(vector, shape):
     plt.imshow(np.reshape(vector, shape), 'gray')
     plt.axis('off')
     plt.show()
+
 
 def plotData(X_lda,label):
     plt.clf()
@@ -183,8 +184,10 @@ if __name__ == '__main__':
         X_lda[i] = row.dot(W)
     print X_lda
     #plot output
-    plotData(X_lda, labels)
-
+    #plotData(X_lda, labels)
+    plt.plot(X_lda,'ro')
+    plt.grid()
+    plt.show()
 
     mu =[]
     mu.append(np.dot(W.T, means[0]))
@@ -218,16 +221,12 @@ if __name__ == '__main__':
     print('Best Threshold = ',bestThreshold)
     print("Best Performance = ",bestPerformance)
     print("Projected labels: ")
-    print(projectedLabels)
-    print("Recalls:")
-    print(recalls)
-    print("Precisions: ")
-    print(precisions)
 
-    # plot W
-    plt.plot(W)
-    plt.grid()
-    plt.show()
+    print projectedLabels
+    print "Recalls:"
+    print recalls
+    print "Precisions: "
+    print precisions
 
     plt.clf()
     plt.plot(recalls, precisions, lw=2, color='navy',
@@ -252,4 +251,3 @@ if __name__ == '__main__':
         projectedLabels.append(prediction)
 
     print(projectedLabels)
-
