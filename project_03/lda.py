@@ -63,7 +63,7 @@ def readData(dirName):
             image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31)).ravel()
             data[counter] = image
             counter+=1
-    #data = preprocessing.normalize(data)
+    data = preprocessing.normalize(data)
     label = np.char.array(files).rfind('Pos')
     label[np.where(label == -1)] = 0  # neg class
     label[np.where(label > 0)] = 1  # pos class
@@ -265,5 +265,5 @@ if __name__ == '__main__':
         projectedLabels.append(prediction)
     stop = timeit.default_timer()
     predictionDuration = stop-start
-    
+
     print projectedLabels
