@@ -171,8 +171,8 @@ if __name__ == '__main__':
     start = timeit.default_timer()
     # calculate within class covariance matrix
     S_W = getSWMatrix(means, dataset)
-    draw(S_W,S_W.shape)
     stop = timeit.default_timer()
+    draw(S_W,S_W.shape)
     S_WDuration = stop-start
 
     start = timeit.default_timer()
