@@ -17,7 +17,7 @@ import random
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
-TEST_DIR = 'uiuc/test'
+TEST_DIR = 'uiuc/test1'
 TRAIN_DIR = 'uiuc/train1'
 
 
@@ -55,6 +55,8 @@ def readData(dirName):
         data = np.zeros(shape=(len(files),IMG_SIZE))
         counter =0
         for filename in files:
+            if(filename.find("DS_Store")==1):
+                continue
             path = os.path.join(root, filename)
             image = misc.imresize(misc.imread(path, flatten=True).astype("float"),size=(81,31)).ravel()
             data[counter] = image
@@ -177,16 +179,20 @@ if __name__ == '__main__':
     W = getProjector(S_B,S_W)
     draw(W,(81,31))
 
-
-    #read new data
-    newData,labels = readTrainingData()
-    projectedLabels = []
-
     #X_lda = newData.dot(W)
-    X_lda = np.empty(shape=(newData.shape[0],))
-    for i,row in enumerate(newData):
+    X_lda = np.empty(shape=(dataset.shape[0],))
+    for i,row in enumerate(dataset):
         X_lda[i] = row.dot(W)
     print X_lda
+    #plot output
+    plotData(X_lda, labels)
+
+
+    #read new data
+    newData,labels = readTestData()
+    projectedLabels = []
+
+
 
     mu =[]
     mu.append(np.dot(W.T, means[0]))
@@ -221,9 +227,12 @@ if __name__ == '__main__':
     print("Best Performance = ",bestPerformance)
     print("Projected labels: ")
     print projectedLabels
+    print "Recalls:"
+    print recalls
+    print "Precisions: "
+    print precisions
 
-    #plot output
-    plotData(X_lda, labels)
+
 
     # plot W
     plt.plot(W)
@@ -239,6 +248,6 @@ if __name__ == '__main__':
     plt.xlim(precisions.min()-0.5,recalls.max()+0.5)
     plt.ylim(precisions.min()-0.5,recalls.max()+0.5)
     plt.grid()
-    plt.show()#
+    plt.show()
 
 
