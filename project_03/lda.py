@@ -19,8 +19,8 @@ import timeit
 
 IMG_SIZE = 2511
 label_dict = {0: 'Background', 1: 'Car'}
-TEST_DIR = 'uiuc/test1'
-TRAIN_DIR = 'uiuc/train1'
+TEST_DIR = 'uiuc/test'
+TRAIN_DIR = 'uiuc/train'
 
 
 
@@ -174,21 +174,21 @@ if __name__ == '__main__':
     start = timeit.default_timer()
     # calculate within class covariance matrix
     S_W = getSWMatrix(means, dataset)
-    draw(S_W,S_W.shape)
+    draw(S_W, S_W.shape, "s_w.png")
     stop = timeit.default_timer()
     S_WDuration = stop-start
 
     start = timeit.default_timer()
     #calculate between class covariance matrix
     S_B = getSBMatrix(means,overall_mean,dataset)
-    draw(S_B,S_B.shape)
+    draw(S_B,S_B.shape, "s_b.png")
     stop = timeit.default_timer()
     S_BDuration = stop-start
 
     start = timeit.default_timer()
     #calculate projector matrix
     W = getProjector(S_B,S_W)
-    draw(W,(81,31))
+    draw(W, (81,31), "ww.png")
     stop = timeit.default_timer()
     WDuration = stop-start
 
@@ -199,9 +199,10 @@ if __name__ == '__main__':
         X_lda[i] = row.dot(W)
     print(X_lda)
     #plot output
-    #plotData(X_lda, labels)
+    plotData(X_lda, labels)
     plt.plot(X_lda, 'ro')
     plt.grid()
+    plt.savefig("lda2.png")
     plt.show()
 
     mu =[]
@@ -237,11 +238,18 @@ if __name__ == '__main__':
     print("Best Performance = ",bestPerformance)
     print("Projected labels: ")
 
-    print projectedLabels
-    print "Recalls:"
-    print recalls
-    print "Precisions: "
-    print precisions
+    print(projectedLabels)
+    print("Recalls:")
+    print(recalls)
+    print("Precisions: ")
+    print(precisions)
+
+    # plot W
+    plt.plot(W)
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
 
     plt.clf()
     plt.plot(recalls, precisions, lw=2, color='navy',
